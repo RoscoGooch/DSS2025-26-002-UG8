@@ -89,6 +89,13 @@ body {
         background-color: #f2875c;
     }
 
+    #session-timeout {
+        background-color: #f6f7ef;
+        border: #000000 2px solid;
+        border-radius: 3px;
+        display: block;
+    }
+
     label {
         font-weight: bold;
     }
