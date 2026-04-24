@@ -36,7 +36,7 @@ app.post('/',function(req, res){
     var password = req.body.password_input;
 
     // Currently only "username" is a valid username
-    if(username !== "username") {
+    if(username !== "username") { 
 
         // Update login_attempt with credentials used to log in
         let login_attempt = {"username" : username, "password" : password};
