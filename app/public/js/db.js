@@ -1,12 +1,14 @@
-let mysql = require('mysql');
+require('dotenv').config();
+const { Pool } = require('pg');
 
 class Database {
     constructor() {
-        con = mysql.createConnection({
-            host: "localhost",
-            user: "ug8",
-            password: "ug8",
-            database: "dss_DB"
+        const pool = new Pool({
+            user: process.env.DB_USER,
+            host: process.env.DB_HOST,
+            database: process.env.DB_NAME,
+            password: process.env.DB_PASSWORD,
+            port: process.env.DB_PORT
         });
     }
 
@@ -22,29 +24,13 @@ class Database {
             query = "SELECT * FROM users WHERE username = ? AND password = ?";
         }
 
-        this.con.connect(function(err) {
-            if (err) throw err;
-            this.con.query(query, [user, password], function(err, result) {
-                //if an error is returned it means that either the details don't match or something has gone wrong
-                //either way the login should fail in that situation
-                if (err) {
-                    return false;
-                } else {
-                    return true;
-                }
-            })
-        });
+        
     }
 
     createAccount(email, username, password) {
         query = "INSERT INTO users (email, username, password) VALUES (?, ?, ?)";
 
-        this.con.connect(function(err) {
-            if (err) throw err;
-            this.con.query(query, [email, username, password], function(err, result) {
-                if (err) throw err;
-            })
-        });
+        
         return this.generateToken(); //automatically log the user in when they make an account
     }
 
