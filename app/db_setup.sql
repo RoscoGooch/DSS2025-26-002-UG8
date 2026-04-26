@@ -8,7 +8,7 @@ ALTER ROLE username SET timezone TO 'UTC';
 
 GRANT ALL PRIVILEGES ON DATABASE dss_DB TO username;
 
-CREATE TABLE user (
+CREATE TABLE users (
     userid INT PRIMARY KEY NOT NULL,
     username VARCHAR(45),
     email VARCHAR(45),
@@ -23,7 +23,7 @@ CREATE TABLE payment (
     security_number INT
 );
 
-INSERT INTO user (
+INSERT INTO users (
     userid, 
     username, 
     email, 
