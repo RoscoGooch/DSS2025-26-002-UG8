@@ -18,7 +18,7 @@ CREATE TABLE users (
 
 CREATE TABLE payment (
     userid INT PRIMARY KEY NOT NULL,
-    card_number INT,
+    card_number BIGINT,
     expiration_date DATE,
     security_number INT
 );
@@ -31,10 +31,10 @@ INSERT INTO users (
     password_salt
 ) VALUES (
     1234,
-    "test",
-    "test@test.com",
-    "password1234",
-    "1234"
+    'test',
+    'test@test.com',
+    'password1234',
+    '1234'
 );
 
 INSERT INTO payment (
@@ -45,6 +45,6 @@ INSERT INTO payment (
 ) VALUES (
     1234,
     4659430012944612,
-    2026-01,
+    2026-01-01,
     220
 );
