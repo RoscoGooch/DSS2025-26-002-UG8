@@ -5,26 +5,29 @@ async function loadPosts() {
     const post_response = await fetch("../json/posts.json");
     const post_data = await post_response.json();
 
-    // Load login data
-    const login_response = await fetch("../json/login_attempt.json");
+    // // Load login data
+    // const login_response = await fetch("../json/login_attempt.json");
+    // const login_data = await login_response.json();
+
+    const login_response = await fetch("/api/user");
     const login_data = await login_response.json();
 
     // Remove current posts
     let postList = document.getElementById('myPosts');
 
-    for(let i = 0; i < postList.children.length; i++) {
-        if(postList.children[i].nodeName == "article") {
+    for (let i = 0; i < postList.children.length; i++) {
+        if (postList.children[i].nodeName == "article") {
             postList.removeChild(postList.children[i]);
         }
     }
 
     // Add posts made by current user
-    for(let i = 0; i < post_data.length; i++) {
-        
+    for (let i = 0; i < post_data.length; i++) {
+
         let author = post_data[i].username;
 
         // Check usernames match on each post
-        if(author === login_data.username) {
+        if (author === login_data.username) {
             let timestamp = post_data[i].timestamp;
             let title = post_data[i].title;
             let content = post_data[i].content;
@@ -45,11 +48,11 @@ async function loadPosts() {
             let figcap = document.createElement('figcaption');
             fig.appendChild(img);
             fig.appendChild(figcap);
-            
+
             let titleContainer = document.createElement('h3');
             titleContainer.textContent = title;
             figcap.appendChild(titleContainer);
-            
+
             let usernameContainer = document.createElement('h5');
             usernameContainer.textContent = author;
             figcap.appendChild(usernameContainer);
@@ -87,7 +90,7 @@ function deletePost(e) {
 
     // Put post in object to be the body of fetch request
     const post = {
-        postId:document.getElementsByTagName('h6')[0].textContent, 
+        postId: document.getElementsByTagName('h6')[0].textContent,
     };
 
     const requestHeaders = {
@@ -95,14 +98,14 @@ function deletePost(e) {
     };
 
     // Delete post
-  fetch('/deletepost', {
-    method: 'POST',
-    headers: requestHeaders,
-    body:JSON.stringify(post)
-  });
+    fetch('/deletepost', {
+        method: 'POST',
+        headers: requestHeaders,
+        body: JSON.stringify(post)
+    });
 
-  // Hide element on button click so deletion appears immediate
-  e.target.parentNode.hidden = true;
+    // Hide element on button click so deletion appears immediate
+    e.target.parentNode.hidden = true;
 }
 
 // Function to edit post
@@ -110,14 +113,14 @@ function editPost(e) {
 
     // Get post that the user clicked on
     let post = e.target.parentNode;
-   
+
     // Fill out form fields with data grabbed from post
     document.getElementById("title_field").value = post.getElementsByTagName('h3')[0].textContent;
     document.getElementById("content_field").value = post.getElementsByTagName('p')[0].textContent;
     document.getElementById("postId").value = post.getElementsByTagName('h6')[0].textContent;
 
     // Scroll user to post form
-    document.getElementById("postForm").scrollIntoView({behavior: "smooth"});
+    document.getElementById("postForm").scrollIntoView({ behavior: "smooth" });
 
 }
 
@@ -149,7 +152,7 @@ function searchPosts() {
 
         // Change display property of posts depending on whether it matches the search or not
         if (postContent.toUpperCase().indexOf(filter) > -1 || titleContent.toUpperCase().indexOf(filter) > - 1 ||
-             usernameContent.toUpperCase().indexOf(filter) > - 1) {
+            usernameContent.toUpperCase().indexOf(filter) > - 1) {
             posts[i].style.display = "";
         } else {
             posts[i].style.display = "none";

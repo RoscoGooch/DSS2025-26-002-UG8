@@ -1,4 +1,6 @@
-const express = require('express')
+const express = require('express');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const app = express();
 const port = 3000;
 
@@ -10,84 +12,115 @@ app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+app.use(cookieParser());
+
+app.use(session({
+    secret: "DONTTRYIT",
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+        httpOnly: true,
+        secure: false, //SET TO TRUE WHEN USING HTTPS
+        maxAge: 1000 * 60 * 30 //30 minutes
+    }
+}))
+
 // Landing page
 app.get('/', (req, res) => {
     /// send the static file
     res.sendFile(__dirname + '/public/html/login.html', (err) => {
-        if (err){
+        if (err) {
             console.log(err);
         }
     })
 });
 
 // Reset login_attempt.json when server restarts
-let login_attempt = {"username" : "null", "password" : "null"};
+let login_attempt = { "username": "null", "password": "null" };
 let data = JSON.stringify(login_attempt);
 fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
 // Store who is currently logged in
-let currentUser = null;
+//let currentUser = null;
 
 // Login POST request
-app.post('/',function(req, res){
+app.post('/', function (req, res) {
 
     // Get username and password entered from user
     var username = req.body.username_input;
     var password = req.body.password_input;
 
     // Currently only "username" is a valid username
-    if(username !== "username") { 
+    if (username !== "username") {
 
         // Update login_attempt with credentials used to log in
-        let login_attempt = {"username" : username, "password" : password};
+        let login_attempt = { "username": username, "password": password };
         let data = JSON.stringify(login_attempt);
         fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
         // Redirect back to login page
         res.sendFile(__dirname + '/public/html/login.html', (err) => {
-            if (err){
+            if (err) {
                 console.log(err);
             }
         });
     }
 
     // Currently only "password" is a valid password
-    if(password !== "password") {
+    if (password !== "password") {
 
         // Update login_attempt with credentials used to log in
-        let login_attempt = {"username" : username, "password" : password};
+        let login_attempt = { "username": username, "password": password };
         let data = JSON.stringify(login_attempt);
         fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
         // Redirect back to login page
         res.sendFile(__dirname + '/public/html/login.html', (err) => {
-            if (err){
+            if (err) {
                 console.log(err);
             }
         });
     }
 
     // Valid username and password both entered together
-    if(username === "username" && password === "password") {
+    if (username === "username" && password === "password") {
         // Update login_attempt with credentials
-        let login_attempt = {"username" : username, "password" : password};
+        let login_attempt = { "username": username, "password": password };
         let data = JSON.stringify(login_attempt);
-        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data); //LINKED TO THE FILE WHICH WE SHOULD GET RID OF ONCE THE DB IS FULLY LINKED
 
         // Update current user upon successful login
-        currentUser = req.body.username_input;
+        //currentUser = req.body.username_input;
+
+        //Stores the user as the current cookie session
+        req.session.user = username
 
         // Redirect to home page
         res.sendFile(__dirname + '/public/html/index.html', (err) => {
-            if (err){
+            if (err) {
                 console.log(err);
             }
         })
     }
 });
 
+app.get("/api/user", (req, res) => {
+    if (!req.session.user) {
+        return res.json({ loggedIn: false });
+    }
+    res.json({ loggedIn: true, username: req.session.user });
+})
+
+//If the user isn't logged in, returns them to the login screen
+function requireLogin(req, res, next) {
+    if (!req.session.user) {
+        return res.redirect("/");
+    }
+    next();
+}
+
 // Make a post POST request
-app.post('/makepost', function(req, res) {
+app.post('/makepost', requireLogin, function (req, res) {
 
     // Read in current posts
     const json = fs.readFileSync(__dirname + '/public/json/posts.json');
@@ -109,7 +142,7 @@ app.post('/makepost', function(req, res) {
     let newId = 0;
 
     // If postId is empty, user is making a new post
-    if(req.body.postId == "") {
+    if (req.body.postId == "") {
         newId = maxId + 1;
     } else { // If postID != empty, user is editing a post
         newId = req.body.postId;
@@ -120,16 +153,16 @@ app.post('/makepost', function(req, res) {
     }
 
     // Add post to posts.json
-    posts.push({"username": currentUser , "timestamp": curDate, "postId": newId, "title": req.body.title_field, "content": req.body.content_field});
+    posts.push({ "username": req.session.user, "timestamp": curDate, "postId": newId, "title": req.body.title_field, "content": req.body.content_field });
 
     fs.writeFileSync(__dirname + '/public/json/posts.json', JSON.stringify(posts));
 
     // Redirect back to my_posts.html
     res.sendFile(__dirname + "/public/html/my_posts.html");
- });
+});
 
- // Delete a post POST request
- app.post('/deletepost', (req, res) => {
+// Delete a post POST request
+app.post('/deletepost', requireLogin, (req, res) => {
 
     // Read in current posts
     const json = fs.readFileSync(__dirname + '/public/json/posts.json');
@@ -143,7 +176,7 @@ app.post('/makepost', function(req, res) {
     fs.writeFileSync(__dirname + '/public/json/posts.json', JSON.stringify(posts));
 
     res.sendFile(__dirname + "/public/html/my_posts.html");
- });
+});
 
 app.listen(port, () => {
     console.log(`My app listening on port ${port}!`)
