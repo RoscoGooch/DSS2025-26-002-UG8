@@ -5,10 +5,7 @@ async function loadPosts() {
     const post_response = await fetch("../json/posts.json");
     const post_data = await post_response.json();
 
-    // // Load login data
-    // const login_response = await fetch("../json/login_attempt.json");
-    // const login_data = await login_response.json();
-
+    //Load login data from database
     const login_response = await fetch("/api/user");
     const login_data = await login_response.json();
 

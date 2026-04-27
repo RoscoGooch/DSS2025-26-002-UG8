@@ -5,20 +5,21 @@ async function loadPosts() {
     const post_response = await fetch("../json/posts.json");
     const post_data = await post_response.json();
 
-    const login_response = await fetch("../json/login_attempt.json");
+    //Load login data from database
+    const login_response = await fetch("/api/user");
     const login_data = await login_response.json();
 
     let postList = document.getElementById('postsList');
 
     // Remove current posts
-    for(let i = 0; i < postList.children.length; i++) {
-        if(postList.children[i].nodeName == "article") {
+    for (let i = 0; i < postList.children.length; i++) {
+        if (postList.children[i].nodeName == "article") {
             postList.removeChild(postList.children[i]);
         }
     }
 
     // Add all recorded posts
-    for(let i = 0; i < post_data.length; i++) {
+    for (let i = 0; i < post_data.length; i++) {
         let author = post_data[i].username;
         let timestamp = post_data[i].timestamp;
         let title = post_data[i].title;
@@ -40,11 +41,11 @@ async function loadPosts() {
         let figcap = document.createElement('figcaption');
         fig.appendChild(img);
         fig.appendChild(figcap);
-        
+
         let titleContainer = document.createElement('h3');
         titleContainer.textContent = title;
         figcap.appendChild(titleContainer);
-        
+
         let usernameContainer = document.createElement('h5');
         usernameContainer.textContent = author;
         figcap.appendChild(usernameContainer);
@@ -91,7 +92,7 @@ function searchPosts() {
 
         // Change display property of post depending on if it matches search query
         if (postContent.toUpperCase().indexOf(filter) > -1 || titleContent.toUpperCase().indexOf(filter) > - 1 ||
-             usernameContent.toUpperCase().indexOf(filter) > - 1) {
+            usernameContent.toUpperCase().indexOf(filter) > - 1) {
             posts[i].style.display = "";
         } else {
             posts[i].style.display = "none";
@@ -100,6 +101,6 @@ function searchPosts() {
 }
 
 // Search posts whenever the user types
-if(document.getElementById("search")) {
+if (document.getElementById("search")) {
     document.getElementById("search").addEventListener("keyup", searchPosts);
 }

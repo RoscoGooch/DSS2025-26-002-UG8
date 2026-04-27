@@ -1,51 +1,35 @@
-// Update error message based on login attempt
-async function checkLoginAttempts() {
-    const response = await fetch("../json/login_attempt.json");
-    const form_data = await response.json();
+document.getElementById("login_form").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-    // Inform user they need to fill out the fields on the login form
-    if (form_data.username === "null" || form_data.password === "null") {
-        document.getElementById("login_error").parentNode.removeChild(document.getElementById("login_error"));
-    }
-    if (form_data.username === "" || form_data.password === "") {
-        if (document.getElementById("login_error") !== null) {
-            document.getElementById("login_error").parentNode.removeChild(document.getElementById("login_error"));
-        }
+    const username = document.getElementById("username_input").value;
+    const password = document.getElementById("password_input").value;
 
-        let error_msg = document.createElement("p");
-        error_msg.id = "login_error";
-        error_msg.textContent = "Please fill out the login fields.";
-        error_msg.classList.add("error");
-        document.querySelector("#login_btn").parentNode.insertBefore(error_msg, document.querySelector("#login_btn"));
+    const response = await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username_input: username,
+            password_input: password
+        })
+    });
 
-        // Inform user they have entered the incorrect username or password
-    } else if (form_data.username !== "username" || form_data.password !== "password") {
-        if (document.getElementById("login_error") !== null) {
-            document.getElementById("login_error").parentNode.removeChild(document.getElementById("login_error"));
-        }
+    const data = await response.json();
 
-        let error_msg = document.createElement("p");
-        error_msg.id = "login_error";
-        error_msg.textContent = "Incorrect username or password.";
-        error_msg.classList.add("error");
-        document.querySelector("#login_btn").parentNode.insertBefore(error_msg, document.querySelector("#login_btn"));
-
-        // } else if(form_data.password !== "password") { // Inform user they have entered the incorrect password
-        //     if(document.getElementById("login_error") !== null) {
-        //         document.getElementById("login_error").parentNode.removeChild(document.getElementById("login_error"));
-        //     }
-
-        //     let error_msg = document.createElement("p");
-        //     error_msg.id = "login_error";
-        //     error_msg.textContent = "Incorrect password.";
-        //     error_msg.classList.add("error");
-        //     document.querySelector("#login_btn").parentNode.insertBefore(error_msg, document.querySelector("#login_btn"));
-
+    if (data.success) {
+        // login worked → go to homepage (or dashboard)
+        window.location.href = "/html/index.html";
     } else {
-        if (document.getElementById("login_error") !== null) {
-            document.getElementById("login_error").parentNode.removeChild(document.getElementById("login_error"));
-        }
+        showError(data.message);
     }
-}
+});
 
-checkLoginAttempts();
+function showError(msg) {
+    let old = document.getElementById("login_error");
+    if (old) old.remove();
+
+    let error = document.createElement("p");
+    error.id = "login_error";
+    error.classList.add("error");
+    error.textContent = msg;
+    document.querySelector("#login_btn").before(error);
+}

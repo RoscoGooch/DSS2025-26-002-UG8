@@ -1,23 +1,35 @@
-const {Client} = require('pg')
+// const { Client } = require('pg')
 
-const client = new Client ({
+// const client = new Client({
+//     host: "localhost",
+//     user: "postgres",
+//     port: 5432,
+//     password: "kat22Feb", //Use the password you used to set up pgAdmin
+//     database: "dss_db"
+// })
+
+// client.connect();
+
+// client.query('Select * from users', (err, res) => {
+//     if (!err) {
+//         console.log(res.rows);
+//     } else {
+//         console.log(err.message);
+//     }
+//     client.end();
+
+// })
+
+//npm install pg
+
+const { Pool } = require('pg');
+
+const pool = new Pool({
     host: "localhost",
     user: "postgres",
     port: 5432,
     password: "password", //Use the password you used to set up pgAdmin
     database: "dss_DB"
-})
+});
 
-client.connect();
-
-client.query('Select * from users', (err, res)=>{
-    if(!err){
-        console.log(res.rows);
-    } else{
-        console.log(err.message);
-    }
-    client.end
-    
-})
-
-//npm install pg
+module.exports = pool;

@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const pool = require('./database');
 const app = express();
 const port = 3000;
 
@@ -36,71 +37,65 @@ app.get('/', (req, res) => {
 });
 
 // Reset login_attempt.json when server restarts
-let login_attempt = { "username": "null", "password": "null" };
-let data = JSON.stringify(login_attempt);
-fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+// let login_attempt = { "username": "null", "password": "null" };
+// let data = JSON.stringify(login_attempt);
+// fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
 
 // Store who is currently logged in
 //let currentUser = null;
 
 // Login POST request
-app.post('/', function (req, res) {
+app.post('/', async function (req, res) {
 
-    // Get username and password entered from user
-    var username = req.body.username_input;
-    var password = req.body.password_input;
+    const username = req.body.username_input;
+    const password = req.body.password_input;
 
-    // Currently only "username" is a valid username
-    if (username !== "username") {
-
-        // Update login_attempt with credentials used to log in
-        let login_attempt = { "username": username, "password": password };
-        let data = JSON.stringify(login_attempt);
-        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
-        // Redirect back to login page
-        res.sendFile(__dirname + '/public/html/login.html', (err) => {
-            if (err) {
-                console.log(err);
-            }
+    //Empty fields check
+    if (!username || !password) {
+        return res.json({
+            success: false,
+            message: "Please fill out the login fields."
         });
     }
 
-    // Currently only "password" is a valid password
-    if (password !== "password") {
+    try {
+        //Find user in database
+        const result = await pool.query(
+            "SELECT * FROM users WHERE username = $1",
+            [username]
+        );
 
-        // Update login_attempt with credentials used to log in
-        let login_attempt = { "username": username, "password": password };
-        let data = JSON.stringify(login_attempt);
-        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
+        //Username not found
+        if (result.rows.length === 0) {
+            return res.json({
+                success: false,
+                message: "Incorrect username or password."
+            });
+        }
 
-        // Redirect back to login page
-        res.sendFile(__dirname + '/public/html/login.html', (err) => {
-            if (err) {
-                console.log(err);
-            }
+        const user = result.rows[0];
+
+        //Wrong password
+        if (user.password !== password) {
+            return res.json({
+                success: false,
+                message: "Incorrect username or password."
+            });
+        }
+
+        //If both are present, login
+        req.session.user = username;
+
+        return res.json({
+            success: true
         });
-    }
 
-    // Valid username and password both entered together
-    if (username === "username" && password === "password") {
-        // Update login_attempt with credentials
-        let login_attempt = { "username": username, "password": password };
-        let data = JSON.stringify(login_attempt);
-        fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data); //LINKED TO THE FILE WHICH WE SHOULD GET RID OF ONCE THE DB IS FULLY LINKED
-
-        // Update current user upon successful login
-        //currentUser = req.body.username_input;
-
-        //Stores the user as the current cookie session
-        req.session.user = username
-
-        // Redirect to home page
-        res.sendFile(__dirname + '/public/html/index.html', (err) => {
-            if (err) {
-                console.log(err);
-            }
-        })
+    } catch (err) {
+        console.error(err);
+        return res.json({
+            success: false,
+            message: "Server error. Please try again."
+        });
     }
 });
 
