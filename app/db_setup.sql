@@ -12,7 +12,7 @@ CREATE TABLE users (
     userid INT PRIMARY KEY NOT NULL,
     username VARCHAR(45),
     email VARCHAR(45),
-    password VARCHAR(45),
+    password VARCHAR(255),
     password_salt VARCHAR(45)
 );
 

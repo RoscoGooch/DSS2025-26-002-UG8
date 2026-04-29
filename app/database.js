@@ -28,8 +28,8 @@ const pool = new Pool({
     host: "localhost",
     user: "postgres",
     port: 5432,
-    password: "password", //Use the password you used to set up pgAdmin
-    database: "dss_DB"
+    password: "kat22Feb", //Use the password you used to set up pgAdmin
+    database: "dss_db"
 });
 
 module.exports = pool;

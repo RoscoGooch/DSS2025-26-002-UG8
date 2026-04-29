@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcrypt");
 const pool = require('./database');
 const app = express();
 const port = 3000;
@@ -22,9 +23,9 @@ app.use(session({
     cookie: {
         httpOnly: true,
         secure: false, //SET TO TRUE WHEN USING HTTPS
-        maxAge: 1000 * 60 * 30 //30 minutes
+        maxAge: 1000 * 60 * 10 //10 minutes
     }
-}))
+}));
 
 // Landing page
 app.get('/', (req, res) => {
@@ -65,23 +66,27 @@ app.post('/', async function (req, res) {
             [username]
         );
 
-        //Username not found
-        if (result.rows.length === 0) {
-            return res.json({
-                success: false,
-                message: "Incorrect username or password."
-            });
-        }
-
         const user = result.rows[0];
 
-        //Wrong password
-        if (user.password !== password) {
+        //Username not found
+        if (result.rows.length === 0) {
+            //Compares the input password with this fake hash, keeps the response time the same to avoid accounte enumeration
+            const fakeMatch = await bcrypt.compare(password, "$2b$10$WE93n9GGTuQOueCbVyHq4OV3giSGE3kAc.0xP1OswsIBhPWdF.fbq");
             return res.json({
                 success: false,
                 message: "Incorrect username or password."
             });
-        }
+        };
+
+        const passwordMatch = await bcrypt.compare(password, user.password)
+
+        //Wrong password
+        if (!passwordMatch) {
+            return res.json({
+                success: false,
+                message: "Incorrect username or password."
+            });
+        };
 
         //If both are present, login
         req.session.user = username;
@@ -104,7 +109,7 @@ app.get("/api/user", (req, res) => {
         return res.json({ loggedIn: false });
     }
     res.json({ loggedIn: true, username: req.session.user });
-})
+});
 
 //If the user isn't logged in, returns them to the login screen
 function requireLogin(req, res, next) {
@@ -112,7 +117,7 @@ function requireLogin(req, res, next) {
         return res.redirect("/");
     }
     next();
-}
+};
 
 // Make a post POST request
 app.post('/makepost', requireLogin, function (req, res) {
