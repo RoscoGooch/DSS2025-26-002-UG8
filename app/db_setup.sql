@@ -27,14 +27,12 @@ INSERT INTO users (
     userid, 
     username, 
     email, 
-    password, 
-    password_salt
+    password
 ) VALUES (
     1234,
     'test',
     'test@test.com',
-    'password1234',
-    '1234'
+    'password1234'
 );
 
 INSERT INTO payment (

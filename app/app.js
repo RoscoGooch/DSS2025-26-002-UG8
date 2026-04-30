@@ -5,9 +5,14 @@ const bcrypt = require("bcrypt");
 const pool = require('./database');
 const app = express();
 const port = 3000;
+const crypto = require('crypto');
 
 var bodyParser = require('body-parser');
 const fs = require('fs');
+
+function createCSRFToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
 
 app.use(express.static(__dirname + '/public'));
 
@@ -29,21 +34,13 @@ app.use(session({
 
 // Landing page
 app.get('/', (req, res) => {
-    /// send the static file
+    /// Send the static file
     res.sendFile(__dirname + '/public/html/login.html', (err) => {
         if (err) {
             console.log(err);
         }
     })
 });
-
-// Reset login_attempt.json when server restarts
-// let login_attempt = { "username": "null", "password": "null" };
-// let data = JSON.stringify(login_attempt);
-// fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
-// Store who is currently logged in
-//let currentUser = null;
 
 // Login POST request
 app.post('/', async function (req, res) {
@@ -90,6 +87,7 @@ app.post('/', async function (req, res) {
 
         //If both are present, login
         req.session.user = username;
+        req.session.csrfToken = createCSRFToken();
 
         return res.json({
             success: true
@@ -119,8 +117,21 @@ function requireLogin(req, res, next) {
     next();
 };
 
+function checkCSRF(req, res, next) {
+    const submittedToken = req.body.csrfToken;
+
+    if (!submittedToken || submittedToken !== req.session.csrfToken) {
+        return res.status(403).send("Invalid CSRF token.");
+    }
+    next();
+}
+
+app.get('/api/csrf-token', requireLogin, (req, res) => {
+    res.json({ csrfToken: req.session.csrfToken });
+})
+
 // Make a post POST request
-app.post('/makepost', requireLogin, function (req, res) {
+app.post('/makepost', requireLogin, checkCSRF, function (req, res) {
 
     // Read in current posts
     const json = fs.readFileSync(__dirname + '/public/json/posts.json');
@@ -162,7 +173,7 @@ app.post('/makepost', requireLogin, function (req, res) {
 });
 
 // Delete a post POST request
-app.post('/deletepost', requireLogin, (req, res) => {
+app.post('/deletepost', requireLogin, checkCSRF, (req, res) => {
 
     // Read in current posts
     const json = fs.readFileSync(__dirname + '/public/json/posts.json');

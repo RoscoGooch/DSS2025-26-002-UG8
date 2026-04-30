@@ -1,3 +1,19 @@
+// Store CSRF token globally
+let csrfToken = null;
+
+// Fetch CSRF token from server
+fetch('/api/csrf-token')
+    .then(res => res.json())
+    .then(data => {
+        csrfToken = data.csrfToken;
+
+        // Also set it in the hidden form field if present
+        const tokenField = document.getElementById("csrfToken");
+        if (tokenField) {
+            tokenField.value = csrfToken;
+        }
+    });
+
 // Function to load posts made by user who is currently logged in
 async function loadPosts() {
 
@@ -88,6 +104,7 @@ function deletePost(e) {
     // Put post in object to be the body of fetch request
     const post = {
         postId: document.getElementsByTagName('h6')[0].textContent,
+        csrfToken: csrfToken
     };
 
     const requestHeaders = {
