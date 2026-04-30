@@ -23,7 +23,7 @@ app.use(session({
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
-        secure: false, //SET TO TRUE WHEN USING HTTPS
+        secure: true, //SET TO TRUE WHEN USING HTTPS
         maxAge: 1000 * 60 * 10 //10 minutes
     },
 }));
@@ -187,8 +187,11 @@ app.post('/deletepost', requireLogin, (req, res) => {
 }, app)
 .listen(3000);*/
 
-//openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
 
-app.listen(port, () => {
-    console.log(`My app listening on port ${port}!`)
+https.createServer(options, app).listen(port, () => {
+    console.log(`App is running securely on port ${port}`);
 });
