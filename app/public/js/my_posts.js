@@ -76,7 +76,7 @@ async function loadPosts() {
 
             let contentContainer = document.createElement('p');
             contentContainer.id = "content";
-            contentContainer.textContent = content;
+            contentContainer.innerHTML = DOMPurify.sanitize(content);
             figcap.appendChild(contentContainer);
 
             let editBtn = document.createElement('button');

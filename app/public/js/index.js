@@ -55,7 +55,7 @@ async function loadLatestPosts() {
         figcap.appendChild(timeContainer);
 
         let contentContainer = document.createElement('p');
-        contentContainer.textContent = content;
+        contentContainer.innerHTML = DOMPurify.sanitize(content);
         figcap.appendChild(contentContainer);
 
         postList.insertBefore(postContainer, postList.querySelectorAll("section > p")[1]);

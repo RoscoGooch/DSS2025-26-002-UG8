@@ -7,6 +7,8 @@
     <link rel="icon" type="image/x-icon" href="../imgs/foodie.ico">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
     <script src="../js/my_posts.js" defer></script>
     <script src="../js/main.js" defer></script>
 </head>
@@ -18,7 +20,9 @@
         <div class="dropdown">
             <button id="login_link" href="#">Username <i class="fa fa-caret-down"></i></button>
             <div class="dropdown-content">
-                <a id="logout_btn" href="../html/login.html">Log out</a>
+                <form action="/logout" method="POST">
+                    <button id="logout_btn" type="submit">Log out</button>
+                </form>
             </div>
         </div>
         <div class="session-timeout" hidden="true">

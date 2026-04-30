@@ -5,7 +5,10 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
+    "dompurify": "^3.4.1",
     "express-session": "^1.19.0",
-    "pg": "^8.20.0"
+    "helmet": "^8.1.0",
+    "pg": "^8.20.0",
+    "xss-clean": "^0.1.4"
   }
 }

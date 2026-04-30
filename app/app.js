@@ -3,6 +3,8 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
 const pool = require('./database');
+const helmet = require("helmet");
+const xss = require("xss-clean");
 const app = express();
 const port = 3000;
 const crypto = require('crypto');
@@ -22,14 +24,34 @@ app.use(bodyParser.json());
 
 app.use(cookieParser());
 
+app.use(helmet());
+
+//
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+        imgSrc: ["'self'", "data:"],
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+        connectSrc: ["'self'"],
+        frameAncestors: ["'none'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+    },
+}));
+
+app.use(xss());
+
 app.use(session({
     secret: "DONTTRYIT",
     resave: true,
     saveUninitialized: true,
+    rolling: true,
     cookie: {
         httpOnly: true,
         secure: true, //SET TO TRUE WHEN USING HTTPS
-        maxAge: 1000 * 60 * 10 //10 minutes
+        maxAge: 1000 * 60 * 1 //10 minutes
     },
 }));
 
@@ -49,7 +71,7 @@ app.post('/', async function (req, res) {
     const username = req.body.username_input;
     const password = req.body.password_input;
 
-    //Empty fields check
+    //Empty inputs check
     if (!username || !password) {
         return res.json({
             success: false,
@@ -113,10 +135,21 @@ app.get("/api/user", (req, res) => {
 //If the user isn't logged in, returns them to the login screen
 function requireLogin(req, res, next) {
     if (!req.session.user) {
-        return res.redirect("/");
+        return res.redirect("../html/login.html");
     }
     next();
 };
+
+app.post("/logout", (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).send("Logout failed");
+        }
+
+        res.clearCookie("connect.sid");
+        res.redirect("../html/login.html");
+    });
+});
 
 function checkCSRF(req, res, next) {
     const submittedToken = req.body.csrfToken;
