@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const pool = require('./database');
 const app = express();
 const port = 3000;
+const https = require('https');
 
 var bodyParser = require('body-parser');
 const fs = require('fs');
@@ -24,7 +25,7 @@ app.use(session({
         httpOnly: true,
         secure: false, //SET TO TRUE WHEN USING HTTPS
         maxAge: 1000 * 60 * 10 //10 minutes
-    }
+    },
 }));
 
 // Landing page
@@ -177,6 +178,16 @@ app.post('/deletepost', requireLogin, (req, res) => {
 
     res.sendFile(__dirname + "/public/html/my_posts.html");
 });
+
+// we will pass our 'app' to 'https' server
+/*https.createServer({
+    key: fs.readFileSync('./key.pem'),
+    cert: fs.readFileSync('./cert.pem'),
+    passphrase: 'YOUR PASSPHRASE HERE'
+}, app)
+.listen(3000);*/
+
+//openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
 
 app.listen(port, () => {
     console.log(`My app listening on port ${port}!`)
