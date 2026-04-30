@@ -6,6 +6,7 @@ const pool = require('./database');
 const app = express();
 const port = 3000;
 const crypto = require('crypto');
+const https = require('https');
 
 var bodyParser = require('body-parser');
 const fs = require('fs');
@@ -27,9 +28,9 @@ app.use(session({
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
-        secure: false, //SET TO TRUE WHEN USING HTTPS
+        secure: true, //SET TO TRUE WHEN USING HTTPS
         maxAge: 1000 * 60 * 10 //10 minutes
-    }
+    },
 }));
 
 // Landing page
@@ -189,6 +190,19 @@ app.post('/deletepost', requireLogin, checkCSRF, (req, res) => {
     res.sendFile(__dirname + "/public/html/my_posts.html");
 });
 
-app.listen(port, () => {
-    console.log(`My app listening on port ${port}!`)
+// we will pass our 'app' to 'https' server
+/*https.createServer({
+    key: fs.readFileSync('./key.pem'),
+    cert: fs.readFileSync('./cert.pem'),
+    passphrase: 'YOUR PASSPHRASE HERE'
+}, app)
+.listen(3000);*/
+
+const options = {
+    key: fs.readFileSync('key.pem'),
+    cert: fs.readFileSync('cert.pem')
+};
+
+https.createServer(options, app).listen(port, () => {
+    console.log(`App is running securely on port ${port}`);
 });

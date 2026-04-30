@@ -50,5 +50,4 @@ window.addEventListener("unload", function logoutOnClosing() {
     window.location.href = "../html/login.html"
 });
 
-
 displayUsername();
