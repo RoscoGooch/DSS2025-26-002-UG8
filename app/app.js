@@ -44,7 +44,7 @@ app.get('/', (req, res) => {
 });
 
 // Login POST request
-app.post('/', async function (req, res) {
+app.post('/login', async function (req, res) {
 
     const username = req.body.username_input;
     const password = req.body.password_input;
@@ -86,12 +86,9 @@ app.post('/', async function (req, res) {
             });
         };
 
-        //If both are present, login
-        req.session.user = username;
-        req.session.csrfToken = createCSRFToken();
-
         return res.json({
-            success: true
+            success: true,
+            email: user.email
         });
 
     } catch (err) {
@@ -101,6 +98,14 @@ app.post('/', async function (req, res) {
             message: "Server error. Please try again."
         });
     }
+});
+
+app.post('/setup-login', async function (req, res) {
+
+    const username = req.body.username_input;
+
+    req.session.user = username;
+    req.session.csrfToken = createCSRFToken();
 });
 
 app.get("/api/user", (req, res) => {
@@ -190,13 +195,35 @@ app.post('/deletepost', requireLogin, checkCSRF, (req, res) => {
     res.sendFile(__dirname + "/public/html/my_posts.html");
 });
 
-// we will pass our 'app' to 'https' server
-/*https.createServer({
-    key: fs.readFileSync('./key.pem'),
-    cert: fs.readFileSync('./cert.pem'),
-    passphrase: 'YOUR PASSPHRASE HERE'
-}, app)
-.listen(3000);*/
+const nodemailer = require("nodemailer");
+
+// Create a transporter using SMTP
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: 'roscogoo13@gmail.com',
+    pass: 'mris zxei lizn cepp',
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+
+//send email
+app.post('/send-email', requireLogin, checkCSRF, (req, res) => {
+    const email = req.body.email;
+    const verification_code = req.body.verification_code;
+
+    transporter.sendMail({
+        from: '"Foodies R Us" <roscogoo13@gmail.com>', // sender address
+        to: `${email}`, // list of recipients
+        subject: "Hello", // subject line
+        text: `Verification code = ${verification_code}`, // plain text body
+        html: `<b>Verification code = ${verification_code}<b>`, // HTML body
+    });
+});
 
 const options = {
     key: fs.readFileSync('key.pem'),
