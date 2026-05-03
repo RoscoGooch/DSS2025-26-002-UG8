@@ -1,13 +1,3 @@
-var true_verify_code = 0;
-
-const generateVerifyCode = () => {
-    const array = new Uint8Array(10);
-    self.crypto.getRandomValues(array);
-
-    true_verify_code = array[3];
-};
-
-
 document.getElementById("login_form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -26,14 +16,12 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
     const data = await response.json();
 
     if (data.success) {
-        generateVerifyCode();
         // login worked → send verification email
-        ("/send-email", {
+        await fetch ("/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             email: data.email,
-            verification_code: true_verify_code
         })
     }); 
     window.alert("Verification code sent to your email address. Please check it");
@@ -46,21 +34,22 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
 document.getElementById("verification_form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const verification_input = document.getElementById("verification_code").value;
+    const verification_input = Number(document.getElementById("verification_code").value);
 
-    if (verification_input == true_verify_code && true_verify_code != 0) {
-        const username = document.getElementById("username_input").value;
-
-        // login worked → go to homepage (or dashboard)
-        ("/setup-login", {
+    const response = await fetch("/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            username_input: username,
-        })});
+            code: verification_input
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
         window.location.href = "/html/index.html";
     } else {
-        showVerifyError("Invalid code");
+        showVerifyError(data.message);
     }
 });
 

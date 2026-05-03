@@ -245,17 +245,31 @@ const transporter = nodemailer.createTransport({
 });
 
 //send email
-app.post('/send-email', requireLogin, checkCSRF, (req, res) => {
+app.post('/send-email', (req, res) => {
     const email = req.body.email;
-    const verification_code = req.body.verification_code;
+    const verification_code = Math.floor(100000 + Math.random() * 900000);
+    req.session.verificationCode = verification_code;
+    req.session.verificationExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
-    transporter.sendMail({
+    await transporter.sendMail({
         from: '"Foodies R Us" <roscogoo13@gmail.com>', // sender address
         to: `${email}`, // list of recipients
         subject: "Hello", // subject line
         text: `Verification code = ${verification_code}`, // plain text body
         html: `<b>Verification code = ${verification_code}<b>`, // HTML body
     });
+
+    res.json({ success: true });
+});
+
+app.post('/verify-code', (req, res) => {
+    if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires) {
+        req.session.loggedIn = true;
+        res.json({ success: true });
+    }
+    else {
+        res.json({ success: false})
+    }
 });
 
 const options = {
