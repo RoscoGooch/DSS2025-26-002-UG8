@@ -67,7 +67,7 @@ app.get('/', (req, res) => {
 });
 
 // Login POST request
-app.post('/', async function (req, res) {
+app.post('/login', async function (req, res) {
 
     const username = req.body.username_input;
     const password = req.body.password_input;
@@ -109,12 +109,9 @@ app.post('/', async function (req, res) {
             });
         };
 
-        //If both are present, login
-        req.session.user = username;
-        req.session.csrfToken = createCSRFToken();
-
         return res.json({
-            success: true
+            success: true,
+            email: user.email
         });
 
     } catch (err) {
@@ -124,6 +121,14 @@ app.post('/', async function (req, res) {
             message: "Server error. Please try again."
         });
     }
+});
+
+app.post('/setup-login', async function (req, res) {
+
+    const username = req.body.username_input;
+
+    req.session.user = username;
+    req.session.csrfToken = createCSRFToken();
 });
 
 app.get("/api/user", (req, res) => {
@@ -250,13 +255,49 @@ app.post('/deletepost', requireLogin, checkCSRF, async (req, res) => {
     }
 });
 
-// we will pass our 'app' to 'https' server
-/*https.createServer({
-    key: fs.readFileSync('./key.pem'),
-    cert: fs.readFileSync('./cert.pem'),
-    passphrase: 'YOUR PASSPHRASE HERE'
-}, app)
-.listen(3000);*/
+const nodemailer = require("nodemailer");
+
+// Create a transporter using SMTP
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: 'roscogoo13@gmail.com',
+    pass: 'mris zxei lizn cepp',
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+
+//send email
+app.post('/send-email', (req, res) => {
+    const email = req.body.email;
+    const verification_code = Math.floor(100000 + Math.random() * 900000);
+    req.session.verificationCode = verification_code;
+    req.session.verificationExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    await transporter.sendMail({
+        from: '"Foodies R Us" <roscogoo13@gmail.com>', // sender address
+        to: `${email}`, // list of recipients
+        subject: "Hello", // subject line
+        text: `Verification code = ${verification_code}`, // plain text body
+        html: `<b>Verification code = ${verification_code}<b>`, // HTML body
+    });
+
+    res.json({ success: true });
+});
+
+app.post('/verify-code', (req, res) => {
+    if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires) {
+        req.session.loggedIn = true;
+        res.json({ success: true });
+    }
+    else {
+        res.json({ success: false})
+    }
+});
 
 const options = {
     key: fs.readFileSync('key.pem'),
