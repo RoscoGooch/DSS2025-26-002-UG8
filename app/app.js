@@ -109,6 +109,9 @@ app.post('/login', async function (req, res) {
             });
         };
 
+        req.session.user = username;
+        req.session.csrfToken = createCSRFToken();
+
         return res.json({
             success: true,
             email: user.email
@@ -123,13 +126,13 @@ app.post('/login', async function (req, res) {
     }
 });
 
-app.post('/setup-login', async function (req, res) {
+// app.post('/setup-login', async function (req, res) {
 
-    const username = req.body.username_input;
+//     const username = req.body.username_input;
 
-    req.session.user = username;
-    req.session.csrfToken = createCSRFToken();
-});
+//     req.session.user = username;
+//     req.session.csrfToken = createCSRFToken();
+// });
 
 app.get("/api/user", (req, res) => {
     if (!req.session.user) {
@@ -259,20 +262,20 @@ const nodemailer = require("nodemailer");
 
 // Create a transporter using SMTP
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: 'roscogoo13@gmail.com',
-    pass: 'mris zxei lizn cepp',
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+        user: 'roscogoo13@gmail.com',
+        pass: 'mris zxei lizn cepp',
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
 });
 
 //send email
-app.post('/send-email', (req, res) => {
+app.post('/send-email', async (req, res) => {
     const email = req.body.email;
     const verification_code = Math.floor(100000 + Math.random() * 900000);
     req.session.verificationCode = verification_code;
@@ -295,7 +298,7 @@ app.post('/verify-code', (req, res) => {
         res.json({ success: true });
     }
     else {
-        res.json({ success: false})
+        res.json({ success: false })
     }
 });
 

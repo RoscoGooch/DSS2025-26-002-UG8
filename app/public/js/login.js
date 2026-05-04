@@ -6,6 +6,7 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
 
     const response = await fetch("/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             username_input: username,
@@ -17,15 +18,16 @@ document.getElementById("login_form").addEventListener("submit", async (e) => {
 
     if (data.success) {
         // login worked → send verification email
-        await fetch ("/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            email: data.email,
-        })
-    }); 
-    window.alert("Verification code sent to your email address. Please check it");
-    document.getElementById("verification_form").removeAttribute("hidden")
+        await fetch("/send-email", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: data.email,
+            })
+        });
+        window.alert("Verification code sent to your email address. Please check it");
+        document.getElementById("verification_form").removeAttribute("hidden")
     } else {
         showError(data.message);
     }
@@ -38,6 +40,7 @@ document.getElementById("verification_form").addEventListener("submit", async (e
 
     const response = await fetch("/verify-code", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             code: verification_input
