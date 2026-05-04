@@ -23,6 +23,50 @@ CREATE TABLE payment (
     security_number INT
 );
 
+CREATE TABLE posts (
+    postid SERIAL PRIMARY KEY,
+    username VARCHAR(45),
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL
+);
+
+INSERT INTO posts (
+    username,
+    title,
+    content,
+    timestamp
+) VALUES (
+    'homersimpson',
+    'To Sprinkle or Not To Sprinkle',
+    'What do you consider to be the classic donut? Sprinkled or glazed? Does a simple glaze cut it? There''s hundreds and thousands of options to consider.',
+    '2024-11-23 13:37:02'
+);
+
+INSERT INTO posts (
+    username,
+    title,
+    content,
+    timestamp
+) VALUES (
+    'breakfastman',
+    'Pancakes or Waffles: The Never Ending Debate',
+    'Why do we feel the need to pit them against one another? Why can''t pancakes and waffles live in harmony?',
+    '2024-11-23 19:14:16'
+);
+
+INSERT INTO posts (
+    username,
+    title,
+    content,
+    timestamp
+) VALUES (
+    'foodguy79',
+    'Dessert Sushi - should it exist?',
+    'I personally think it is an abomination. ''Red Hots'' are not a suitable wasabi substitute!',
+    '2024-11-24 15:14:32'
+);
+
 INSERT INTO users (
     userid, 
     username, 
