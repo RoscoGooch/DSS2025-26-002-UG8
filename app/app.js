@@ -4,7 +4,8 @@ const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
 const pool = require('./database');
 const app = express();
-const port = 3000;
+const port = 3001;
+require('dotenv').config();
 
 var bodyParser = require('body-parser');
 const fs = require('fs');
@@ -78,7 +79,11 @@ app.post('/', async function (req, res) {
             });
         };
 
-        const passwordMatch = await bcrypt.compare(password, user.password)
+        //Password needs the pepper to be added before it can be compared (current passwords will need to be updated with the pepper)
+        const pepper = process.env.PEPPER;
+        const pepperedPassword = password + pepper;
+
+        const passwordMatch = await bcrypt.compare(pepperedPassword, user.password)
 
         //Wrong password
         if (!passwordMatch) {
@@ -176,6 +181,59 @@ app.post('/deletepost', requireLogin, (req, res) => {
     fs.writeFileSync(__dirname + '/public/json/posts.json', JSON.stringify(posts));
 
     res.sendFile(__dirname + "/public/html/my_posts.html");
+});
+
+app.post('/inputpayment', async function (req, res) {
+
+    const cardNumber = req.body.cardNumber_input;
+    const expirationDate = req.body.expirationDate_input;
+    const securityNumber = req.body.securityNumber_input;
+
+    //Empty fields check
+    if (!cardNumber || !expirationDate || !securityNumber) {
+        return res.json({
+            success: false,
+            message: "Please fill out all fields."
+        });
+    }
+
+    //Get username
+    const response = await fetch("/api/user");
+    const user_data = await response.json();
+    const username = user_data.username;
+
+    try {
+        //Check if user already has payment details to prevent duplicate records
+        const result = await pool.query(
+            "SELECT * FROM payment WHERE userid = $1",
+            [0]
+        );
+
+        if (result.rows.length === 0) {
+            //If the user doesn't already have details, insert into database
+            const result = await pool.query(
+                "INSERT INTO payment (userid, card_number, expiration_date, security_number) VALUES ($1, $2, $3, $4)",
+                [0, cardNumber, expirationDate, securityNumber]
+            );
+        } else {
+            //Else, update existing record
+            const result = await pool.query(
+                "UPDATE payment SET card_number = $1, expiration_date = $2, security_number = $3 WHERE userid = $4 ",
+                [cardNumber, expirationDate, securityNumber, 0]
+            );
+        }
+
+        return res.json({
+            success: true
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.json({
+            success: false,
+            message: "Server error. Please try again."
+        });
+    }
 });
 
 app.listen(port, () => {

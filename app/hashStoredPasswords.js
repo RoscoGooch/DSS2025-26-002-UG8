@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const pool = require("./database");
+require('dotenv').config();
 
 async function hashStoredPasswords() {
     try {
@@ -16,7 +17,11 @@ async function hashStoredPasswords() {
                 continue;
             }
 
-            const hashedPassword = await bcrypt.hash(plainText, 10);
+            //Grabs pepper from env file and adds it to the password
+            const pepper = process.env.PEPPER;
+            const pepperedPassword = plainText + pepper;
+
+            const hashedPassword = await bcrypt.hash(pepperedPassword, 10);
 
             await pool.query(
                 "UPDATE users SET password = $1 WHERE userid = $2",
