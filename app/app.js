@@ -9,6 +9,7 @@ const app = express();
 const port = 3000;
 const crypto = require('crypto');
 const https = require('https');
+require('dotenv').config();
 
 var bodyParser = require('body-parser');
 const fs = require('fs');
