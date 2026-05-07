@@ -287,9 +287,9 @@ app.post('/send-email', async (req, res) => {
     req.session.verificationExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
     await transporter.sendMail({
-        from: `"Music 'R' Us" <dssug8verify@gmail.com>`, // sender address
-        to: `${email}`, // list of recipients
-        subject: "Hello", // subject line
+        from: `"Music 'R' Us" <dssug8verify@gmail.com>`,
+        to: `${email}`,
+        subject: "Verification code for Music 'R' Us",
         text: `Verification code = ${verification_code}`, // plain text body
         html: `<b>Verification code = ${verification_code}<b>`, // HTML body
     });
@@ -297,6 +297,7 @@ app.post('/send-email', async (req, res) => {
     res.json({ success: true });
 });
 
+//check if verification code is correct
 app.post('/verify-code', (req, res) => {
     if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires) {
         req.session.loggedIn = true;
