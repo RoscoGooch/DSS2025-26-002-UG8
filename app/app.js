@@ -271,8 +271,8 @@ const transporter = nodemailer.createTransport({
     port: 587,
     secure: false,
     auth: {
-        user: 'roscogoo13@gmail.com',
-        pass: 'mris zxei lizn cepp',
+        user: 'dssug8verify@gmail.com',
+        pass: 'zosj upqt cirp ynmo',
     },
     tls: {
         rejectUnauthorized: false
@@ -282,12 +282,12 @@ const transporter = nodemailer.createTransport({
 //send email
 app.post('/send-email', async (req, res) => {
     const email = req.body.email;
-    const verification_code = Math.floor(100000 + Math.random() * 900000);
+    const verification_code = Math.floor(100000 + Math.random() * 900000);        
     req.session.verificationCode = verification_code;
     req.session.verificationExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
     await transporter.sendMail({
-        from: '"Foodies R Us" <roscogoo13@gmail.com>', // sender address
+        from: `"Music 'R' Us" <dssug8verify@gmail.com>`, // sender address
         to: `${email}`, // list of recipients
         subject: "Hello", // subject line
         text: `Verification code = ${verification_code}`, // plain text body
