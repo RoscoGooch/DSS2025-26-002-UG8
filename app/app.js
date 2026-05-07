@@ -3,12 +3,19 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
 const pool = require('./database');
+const helmet = require("helmet");
+// const xss = require("xss-clean");
 const app = express();
-const port = 3001;
-require('dotenv').config();
+const port = 3000;
+const crypto = require('crypto');
+const https = require('https');
 
 var bodyParser = require('body-parser');
 const fs = require('fs');
+
+function createCSRFToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
 
 app.use(express.static(__dirname + '/public'));
 
@@ -17,20 +24,41 @@ app.use(bodyParser.json());
 
 app.use(cookieParser());
 
+app.use(helmet());
+
+//Sets HTTPS headers appropriately to avoid a lot of common attacks
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+        defaultSrc: ["'self'"], //Only allows things from the server to run
+        scriptSrc: ["'self'", "https://cdn.jsdelivr.net"], //Only JS files hosted on the server are allowed, alongside DOMpurify 
+        styleSrc: ["'self'", "https://cdnjs.cloudflare.com"], //No malicious CSS
+        imgSrc: ["'self'", "data:"], //No malicious images allowed
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com"], //Allows fonts to be loaded still
+        connectSrc: ["'self'"], //Only allows API calls from the server
+        objectSrc: ["'none'"], //Blocks plugins
+        frameAncestors: ["'none'"], //Prevents clickjacking by not allowing invisible buttons
+        upgradeInsecureRequests: [], //Forces all HTTP requests to be HTTPS
+    },
+}));
+
+// app.use(xss());
+
 app.use(session({
+    name: "sessionId",
     secret: "DONTTRYIT",
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
+    rolling: true, //Resets maxAge after each request, keeps user logged in if they are interacting with the website
     cookie: {
         httpOnly: true,
-        secure: false, //SET TO TRUE WHEN USING HTTPS
-        maxAge: 1000 * 60 * 10 //10 minutes
-    }
+        secure: true, //SET TO TRUE WHEN USING HTTPS
+        maxAge: 1000 * 60 * 5 //10 minutes
+    },
 }));
 
 // Landing page
 app.get('/', (req, res) => {
-    /// send the static file
+    /// Send the static file
     res.sendFile(__dirname + '/public/html/login.html', (err) => {
         if (err) {
             console.log(err);
@@ -38,21 +66,13 @@ app.get('/', (req, res) => {
     })
 });
 
-// Reset login_attempt.json when server restarts
-// let login_attempt = { "username": "null", "password": "null" };
-// let data = JSON.stringify(login_attempt);
-// fs.writeFileSync(__dirname + '/public/json/login_attempt.json', data);
-
-// Store who is currently logged in
-//let currentUser = null;
-
 // Login POST request
-app.post('/', async function (req, res) {
+app.post('/login', async function (req, res) {
 
     const username = req.body.username_input;
     const password = req.body.password_input;
 
-    //Empty fields check
+    //Empty inputs check
     if (!username || !password) {
         return res.json({
             success: false,
@@ -93,11 +113,12 @@ app.post('/', async function (req, res) {
             });
         };
 
-        //If both are present, login
         req.session.user = username;
+        req.session.csrfToken = createCSRFToken();
 
         return res.json({
-            success: true
+            success: true,
+            email: user.email
         });
 
     } catch (err) {
@@ -109,133 +130,187 @@ app.post('/', async function (req, res) {
     }
 });
 
+// app.post('/setup-login', async function (req, res) {
+
+//     const username = req.body.username_input;
+
+//     req.session.user = username;
+//     req.session.csrfToken = createCSRFToken();
+// });
+
 app.get("/api/user", (req, res) => {
     if (!req.session.user) {
-        return res.json({ loggedIn: false });
+        if (req.session) {
+            req.session.destroy(() => { });
+        }
+        return res.status(401).json({ loggedIn: false });
     }
     res.json({ loggedIn: true, username: req.session.user });
+});
+
+//Get all posts
+app.get("/api/posts", async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT * FROM posts ORDER BY timestamp DESC, postid DESC"
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error retrieving posts." });
+    }
+});
+
+//Get specific user's posts
+app.get("/api/myPosts", requireLogin, async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT * FROM posts WHERE username = $1 ORDER BY postid DESC",
+            [req.session.user]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error retrieving posts." });
+    }
+});
+
+//If the session is still active and the user interacts with the webpage, a status is sent, resetting the sessions maxAge
+app.get("/api/keepSessionActive", (req, res) => {
+    if (!req.session || !req.session.user) {
+        return res.sendStatus(401);
+    }
+
+    res.sendStatus(200);
 });
 
 //If the user isn't logged in, returns them to the login screen
 function requireLogin(req, res, next) {
     if (!req.session.user) {
-        return res.redirect("/");
+        return res.redirect("../html/login.html");
     }
     next();
 };
 
+app.post("/logout", (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).send("Logout failed");
+        }
+
+        res.clearCookie("connect.sid");
+        res.redirect("../html/login.html");
+    });
+});
+
+function checkCSRF(req, res, next) {
+    const submittedToken = req.body.csrfToken;
+
+    if (!submittedToken || submittedToken !== req.session.csrfToken) {
+        return res.status(403).send("Invalid CSRF token.");
+    }
+    next();
+}
+
+app.get('/api/csrf-token', requireLogin, (req, res) => {
+    res.json({ csrfToken: req.session.csrfToken });
+})
+
 // Make a post POST request
-app.post('/makepost', requireLogin, function (req, res) {
-
-    // Read in current posts
-    const json = fs.readFileSync(__dirname + '/public/json/posts.json');
-    var posts = JSON.parse(json);
-
-    // Get the current date
-    let curDate = new Date();
-    curDate = curDate.toLocaleString("en-GB");
-
-    // Find post with the highest ID
-    let maxId = 0;
-    for (let i = 0; i < posts.length; i++) {
-        if (posts[i].postId > maxId) {
-            maxId = posts[i].postId;
-        }
-    }
-
-    // Initialise ID for a new post
-    let newId = 0;
-
-    // If postId is empty, user is making a new post
-    if (req.body.postId == "") {
-        newId = maxId + 1;
-    } else { // If postID != empty, user is editing a post
-        newId = req.body.postId;
-
-        // Find post with the matching ID, delete it from posts so user can submit their new version
-        let index = posts.findIndex(item => item.postId == newId);
-        posts.splice(index, 1);
-    }
-
-    // Add post to posts.json
-    posts.push({ "username": req.session.user, "timestamp": curDate, "postId": newId, "title": req.body.title_field, "content": req.body.content_field });
-
-    fs.writeFileSync(__dirname + '/public/json/posts.json', JSON.stringify(posts));
-
-    // Redirect back to my_posts.html
-    res.sendFile(__dirname + "/public/html/my_posts.html");
-});
-
-// Delete a post POST request
-app.post('/deletepost', requireLogin, (req, res) => {
-
-    // Read in current posts
-    const json = fs.readFileSync(__dirname + '/public/json/posts.json');
-    var posts = JSON.parse(json);
-
-    // Find post with matching ID and delete it
-    let index = posts.findIndex(item => item.postId == req.body.postId);
-    posts.splice(index, 1);
-
-    // Update posts.json
-    fs.writeFileSync(__dirname + '/public/json/posts.json', JSON.stringify(posts));
-
-    res.sendFile(__dirname + "/public/html/my_posts.html");
-});
-
-app.post('/inputpayment', async function (req, res) {
-
-    const cardNumber = req.body.cardNumber_input;
-    const expirationDate = req.body.expirationDate_input;
-    const securityNumber = req.body.securityNumber_input;
-
-    //Empty fields check
-    if (!cardNumber || !expirationDate || !securityNumber) {
-        return res.json({
-            success: false,
-            message: "Please fill out all fields."
-        });
-    }
-
-    //Get username
-    const response = await fetch("/api/user");
-    const user_data = await response.json();
-    const username = user_data.username;
-
+app.post('/makepost', requireLogin, checkCSRF, async (req, res) => {
     try {
-        //Check if user already has payment details to prevent duplicate records
-        const result = await pool.query(
-            "SELECT * FROM payment WHERE userid = $1",
-            [0]
-        );
+        const { title_field, content_field, postId } = req.body;
 
-        if (result.rows.length === 0) {
-            //If the user doesn't already have details, insert into database
-            const result = await pool.query(
-                "INSERT INTO payment (userid, card_number, expiration_date, security_number) VALUES ($1, $2, $3, $4)",
-                [0, cardNumber, expirationDate, securityNumber]
+        // If editing an existing post
+        if (postId && postId !== "") {
+            await pool.query(
+                `UPDATE posts 
+                 SET title = $1, content = $2, timestamp = NOW()
+                 WHERE postid = $3 AND username = $4`,
+                [title_field, content_field, postId, req.session.user]
             );
-        } else {
-            //Else, update existing record
-            const result = await pool.query(
-                "UPDATE payment SET card_number = $1, expiration_date = $2, security_number = $3 WHERE userid = $4 ",
-                [cardNumber, expirationDate, securityNumber, 0]
+        }
+        // If creating new post
+        else {
+            await pool.query(
+                `INSERT INTO posts (username, title, content, timestamp)
+                 VALUES ($1,$2,$3,NOW())`,
+                [req.session.user, title_field, content_field]
             );
         }
 
-        return res.json({
-            success: true
-        });
+        res.redirect("/html/my_posts.html");
 
     } catch (err) {
         console.error(err);
-        return res.json({
-            success: false,
-            message: "Server error. Please try again."
-        });
+        res.status(500).send("Error creating post");
     }
 });
 
-app.listen(port, () => {
-    console.log(`My app listening on port ${port}!`)
+// Delete a post POST request
+app.post('/deletepost', requireLogin, checkCSRF, async (req, res) => {
+    try {
+        await pool.query(
+            "DELETE FROM posts WHERE postid = $1 AND username = $2",
+            [req.body.postId, req.session.user]
+        );
+
+        res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error deleting post");
+    }
+});
+
+const nodemailer = require("nodemailer");
+
+// Create a transporter using SMTP
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+        user: 'roscogoo13@gmail.com',
+        pass: 'mris zxei lizn cepp',
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+
+//send email
+app.post('/send-email', async (req, res) => {
+    const email = req.body.email;
+    const verification_code = Math.floor(100000 + Math.random() * 900000);
+    req.session.verificationCode = verification_code;
+    req.session.verificationExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    await transporter.sendMail({
+        from: '"Foodies R Us" <roscogoo13@gmail.com>', // sender address
+        to: `${email}`, // list of recipients
+        subject: "Hello", // subject line
+        text: `Verification code = ${verification_code}`, // plain text body
+        html: `<b>Verification code = ${verification_code}<b>`, // HTML body
+    });
+
+    res.json({ success: true });
+});
+
+app.post('/verify-code', (req, res) => {
+    if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires) {
+        req.session.loggedIn = true;
+        res.json({ success: true });
+    }
+    else {
+        res.json({ success: false })
+    }
+});
+
+const options = {
+    key: fs.readFileSync('key.pem'),
+    cert: fs.readFileSync('cert.pem')
+};
+
+https.createServer(options, app).listen(port, () => {
+    console.log(`App is running securely on port ${port}`);
 });

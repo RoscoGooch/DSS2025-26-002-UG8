@@ -1,58 +1,63 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title> Foodies 'R' Us </title>
-        <meta charset="utf-8">
-        <link rel="icon" type="image/x-icon" href="../imgs/foodie.ico">
-        <link rel="stylesheet" href="../css/style.css">
-        
-        <script src="../js/index.js" defer></script>
-        <script src="../js/main.js" defer></script>
-    </head>
-    <body>
-        <header>
-            <a href="../html/index.html"><img id="logo" src="../imgs/logo.png"></a>
-            <h1>Foodies 'R' Us</h1>
-            <div class="dropdown">
-                <button id="login_link" href="#">Username <i class="fa fa-caret-down"></i></button>
-                <div class="dropdown-content">
-                    <a id="logout_btn" href="../html/login.html">Log out</a>
-                    <a id="payment_btn" href="../html/payment.html">Add Payment Details</a>
-                </div>
-            </div>
-        </header>
 
-        <div id="session-timeout" hidden>
+<head>
+    <title> Music 'R' Us </title>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="../imgs/foodie.ico">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+    <script src="../js/index.js" defer></script>
+    <script src="../js/main.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="../html/index.html"><img id="logo" src="../imgs/logo.png"></a>
+        <h1>Music 'R' Us</h1>
+        <div class="dropdown">
+            <button id="login_link" href="#">Username <i class="fa fa-caret-down"></i></button>
+            <div class="dropdown-content">
+                <form action="/logout" method="POST">
+                    <button id="logout_btn" type="submit">Log out</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- <div id="session-timeout" hidden>
             <h3 id="timeout_display">Logout in 3 minutes</h3>
             <button id="login_cont">Stay logged in</button>
             <button id="login_stop" href="../html/login.html">Log out</button>
-        </div>
+        </div> -->
 
-        <nav>
-            <ul>
-                <li class="active"><a href="../html/index.html">Home</a></li>
-                <li><a href="../html/posts.html">Latest Posts</a></li>
-                <li><a href="../html/my_posts.html">My Posts</a></li>
-            </ul>
-        </nav>
+    <nav>
+        <ul>
+            <li class="active"><a href="../html/index.html">Home</a></li>
+            <li><a href="../html/posts.html">Latest Posts</a></li>
+            <li><a href="../html/my_posts.html">My Posts</a></li>
+        </ul>
+    </nav>
 
-        <main>
-            
-            <section>
-                <h2>Feel like sharing?</h2>
-                <p>Tell your fellow Foodies how you're feeling now!</p>
-                <p><a class="link_btn" href="../html/my_posts.html">Make a Post</a></p>
-            </section>
+    <main>
 
-            <section id="postsList">
-                <h2>Latest Foodie Posts</h2>
-                <p>See the latest posts from your fellow Foodies!</p>
+        <section>
+            <h2>Feel like sharing?</h2>
+            <p>Tell your fellow Music Fans how you're feeling now!</p>
+            <p><a class="link_btn" href="../html/my_posts.html">Make a Post</a></p>
+        </section>
 
-                <p><a class="link_btn" href="../html/posts.html">See More Posts</a></p>
-            </section>
-        </main>
-        <footer>
-            
-        </footer>
-    </body>
+        <section id="postsList">
+            <h2>Latest Music Posts</h2>
+            <p>See the latest posts from your fellow Music Fans!</p>
+
+            <p><a class="link_btn" href="../html/posts.html">See More Posts</a></p>
+        </section>
+    </main>
+    <footer>
+
+    </footer>
+</body>
+
 </html>

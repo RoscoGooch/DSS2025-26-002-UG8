@@ -1,8 +1,24 @@
+// Store CSRF token globally
+let csrfToken = null;
+
+// Fetch CSRF token from server
+fetch('/api/csrf-token')
+    .then(res => res.json())
+    .then(data => {
+        csrfToken = data.csrfToken;
+
+        // Also set it in the hidden form field if present
+        const tokenField = document.getElementById("csrfToken");
+        if (tokenField) {
+            tokenField.value = csrfToken;
+        }
+    });
+
 // Function to load posts made by user who is currently logged in
 async function loadPosts() {
 
     // Load posts data
-    const post_response = await fetch("../json/posts.json");
+    const post_response = await fetch("/api/myPosts");
     const post_data = await post_response.json();
 
     //Load login data from database
@@ -28,7 +44,7 @@ async function loadPosts() {
             let timestamp = post_data[i].timestamp;
             let title = post_data[i].title;
             let content = post_data[i].content;
-            let postId = post_data[i].postId;
+            let postId = post_data[i].postid;
 
             let postContainer = document.createElement('article');
             postContainer.classList.add("post");
@@ -38,7 +54,7 @@ async function loadPosts() {
             let postIdContainer = document.createElement("h6");
             postIdContainer.textContent = postId;
             postIdContainer.hidden = true;
-            postId.id = "postId";
+            postIdContainer.id = "postId";
             postContainer.appendChild(postIdContainer);
 
             let img = document.createElement('img');
@@ -60,7 +76,7 @@ async function loadPosts() {
 
             let contentContainer = document.createElement('p');
             contentContainer.id = "content";
-            contentContainer.textContent = content;
+            contentContainer.innerHTML = DOMPurify.sanitize(content);
             figcap.appendChild(contentContainer);
 
             let editBtn = document.createElement('button');
@@ -75,7 +91,7 @@ async function loadPosts() {
             delBtn.addEventListener("click", deletePost);
             postContainer.appendChild(delBtn);
 
-            postList.insertBefore(postContainer, document.querySelectorAll("article")[0]);
+            postList.appendChild(postContainer);
         }
     }
 }
@@ -88,6 +104,7 @@ function deletePost(e) {
     // Put post in object to be the body of fetch request
     const post = {
         postId: document.getElementsByTagName('h6')[0].textContent,
+        csrfToken: csrfToken
     };
 
     const requestHeaders = {

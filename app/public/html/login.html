@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title> Foodies 'R' Us Blog Login</title>
+        <title> Music 'R' Us Blog Login</title>
         <meta charset="utf-8">
         <link rel="icon" type="image/x-icon" href="../imgs/foodie.ico">
         <link rel="stylesheet" href="../css/style.css">
@@ -10,12 +10,12 @@
     <body>
         <header>
             <a href="../html/index.html"><img id="logo" src="../imgs/logo.png"></a>
-            <h1>Welcome to Foodies 'R' Us!</h1>
+            <h1>Welcome to Music 'R' Us!</h1>
         </header>
         <main>
         <p>Please enter your username and password to continue.</p>
 
-        <form method="post" action="/" id="login_form">
+        <form method="post" action="/login" id="login_form">
             <label for="username_input">Username:</label>
             <input type="text" id="username_input" name="username_input" placeholder="Please enter your username...">
 
@@ -23,6 +23,11 @@
             <input type="password" id="password_input" name="password_input" placeholder="Please enter your password...">
 
             <button id="login_btn" type="submit">Log in</button>
+        </form>
+        <form id="verification_form" hidden>
+            <label for="verification_code">Verification code:</label>
+            <input type="number" id="verification_code" name="verification_code" placeholder="Please enter your verification code...">
+            <button id="verify_btn" type="submit">Authorise </button>
         </form>
         </main>
     </body>
