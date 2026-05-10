@@ -86,7 +86,7 @@ app.post('/login', async function (req, res) {
         const result = await pool.query(
             "SELECT * FROM users WHERE username = $1",
             [username]
-        );
+        ); // Uses parameterized query to prevent SQL injection
 
         const user = result.rows[0];
 
@@ -167,8 +167,8 @@ app.get("/api/myPosts", requireLogin, async (req, res) => {
     try {
         const result = await pool.query(
             "SELECT * FROM posts WHERE username = $1 ORDER BY postid DESC",
-            [req.session.user]
-        );
+            [req.session.user] 
+        ); // Mitigatations against SQL injection are not broken as paramtized query still used. 
         res.json(result.rows);
     } catch (err) {
         console.error(err);
