@@ -51,8 +51,8 @@ app.use(session({
     rolling: true, //Resets maxAge after each request, keeps user logged in if they are interacting with the website
     cookie: {
         httpOnly: true,
-        secure: true, //SET TO TRUE WHEN USING HTTPS
-        maxAge: 1000 * 60 * 5 //10 minutes
+        secure: false, //SET TO FALSE WHEN RUNNING MOCHA TESTS
+        maxAge: 1000 * 60 * 10 //10 minutes
     },
 }));
 
@@ -302,11 +302,17 @@ app.post('/verify-code', (req, res) => {
     }
 });
 
-const options = {
-    key: fs.readFileSync('key.pem'),
-    cert: fs.readFileSync('cert.pem')
-};
+//When the app is running normally, start the HTTPS server, if not don't so it can be tested properly
+if (require.main === module) {
+    const options = {
+        key: fs.readFileSync('key.pem'),
+        cert: fs.readFileSync('cert.pem')
+    };
 
-https.createServer(options, app).listen(port, () => {
-    console.log(`App is running securely on port ${port}`);
-});
+    https.createServer(options, app).listen(port, () => {
+        console.log(`App is running securely on port ${port}`);
+    });
+}
+
+//Exports the app so it can be used in the test file
+module.exports = app;
