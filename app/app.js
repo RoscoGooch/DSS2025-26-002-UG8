@@ -9,6 +9,7 @@ const app = express();
 const port = 3000;
 const crypto = require('crypto');
 const https = require('https');
+require('dotenv').config();
 
 var bodyParser = require('body-parser');
 const fs = require('fs');
@@ -99,7 +100,11 @@ app.post('/login', async function (req, res) {
             });
         };
 
-        const passwordMatch = await bcrypt.compare(password, user.password)
+        //Password needs the pepper to be added before it can be compared (current passwords will need to be updated with the pepper)
+        const pepper = process.env.PEPPER;
+        const pepperedPassword = password + pepper;
+
+        const passwordMatch = await bcrypt.compare(pepperedPassword, user.password)
 
         //Wrong password
         if (!passwordMatch) {
@@ -266,8 +271,8 @@ const transporter = nodemailer.createTransport({
     port: 587,
     secure: false,
     auth: {
-        user: 'roscogoo13@gmail.com',
-        pass: 'mris zxei lizn cepp',
+        user: 'dssug8verify@gmail.com',
+        pass: 'zosj upqt cirp ynmo',
     },
     tls: {
         rejectUnauthorized: false
@@ -277,14 +282,14 @@ const transporter = nodemailer.createTransport({
 //send email
 app.post('/send-email', async (req, res) => {
     const email = req.body.email;
-    const verification_code = Math.floor(100000 + Math.random() * 900000);
+    const verification_code = Math.floor(100000 + Math.random() * 900000);        
     req.session.verificationCode = verification_code;
     req.session.verificationExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
     await transporter.sendMail({
-        from: '"Foodies R Us" <roscogoo13@gmail.com>', // sender address
-        to: `${email}`, // list of recipients
-        subject: "Hello", // subject line
+        from: `"Music 'R' Us" <dssug8verify@gmail.com>`,
+        to: `${email}`,
+        subject: "Verification code for Music 'R' Us",
         text: `Verification code = ${verification_code}`, // plain text body
         html: `<b>Verification code = ${verification_code}<b>`, // HTML body
     });
@@ -292,6 +297,7 @@ app.post('/send-email', async (req, res) => {
     res.json({ success: true });
 });
 
+//check if verification code is correct
 app.post('/verify-code', (req, res) => {
     if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires) {
         req.session.loggedIn = true;

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+/*
 class Database {
     constructor() {
         const pool = new Pool({
@@ -50,3 +51,4 @@ class Database {
         }
     }
 }
+*/
