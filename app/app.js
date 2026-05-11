@@ -307,6 +307,51 @@ app.post('/verify-code', (req, res) => {
     }
 });
 
+app.post('/payment', async function (req, res) {
+
+    const cardNumber = req.body.cardNumber_input;
+    const expirationDate = req.body.expirationDate_input;
+    const securityNumber = req.body.securityNumber_input;
+
+    //Empty inputs check
+    if (!cardNumber || !expirationDate || !securityNumber) {
+        return res.json({
+            success: false,
+            message: "Please fill out the login fields."
+        });
+    }
+
+    try {
+        //Find user in database
+        const result = await pool.query(
+            "SELECT * FROM payment WHERE username = $1",
+            [req.session.user]
+        );
+
+        const user = result.rows[0];
+
+        //Checks if user already has payment details
+        if (result.rows.length === 0) {
+            const result = await pool.query(
+                "INSERT INTO payment (username, card)",
+                [req.session.user]
+            );
+        };
+
+        return res.json({
+            success: true,
+            email: user.email
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.json({
+            success: false,
+            message: "Server error. Please try again."
+        });
+    }
+});
+
 const options = {
     key: fs.readFileSync('key.pem'),
     cert: fs.readFileSync('cert.pem')

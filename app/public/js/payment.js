@@ -12,7 +12,7 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
     const hashedCardNumber = await bcrypt.hash(cardNumber, 10);
     const hashedSecurityNumber = await bcrypt.hash(securityNumber, 10);
 
-    const response = await fetch("/", {
+    const response = await fetch("/payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -25,8 +25,7 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
     const data = await response.json();
 
     if (data.success) {
-        // login worked → go to homepage (or dashboard)
-        window.location.href = "/html/index.html";
+        
     } else {
         showError(data.message);
     }
