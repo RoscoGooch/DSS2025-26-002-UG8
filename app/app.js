@@ -90,7 +90,7 @@ app.post('/login', async function (req, res) {
         const result = await pool.query(
             "SELECT * FROM users WHERE username = $1",
             [username]
-        );
+        ); // Uses parameterized query to prevent SQL injection
 
         const user = result.rows[0];
 
@@ -171,8 +171,8 @@ app.get("/api/myPosts", requireLogin, async (req, res) => {
     try {
         const result = await pool.query(
             "SELECT * FROM posts WHERE username = $1 ORDER BY postid DESC",
-            [req.session.user]
-        );
+            [req.session.user] 
+        ); // Mitigatations against SQL injection are not broken as paramtized query still used. 
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -309,6 +309,51 @@ app.post('/verify-code', (req, res) => {
     }
     else {
         res.json({ success: false })
+    }
+});
+
+app.post('/payment', async function (req, res) {
+
+    const cardNumber = req.body.cardNumber_input;
+    const expirationDate = req.body.expirationDate_input;
+    const securityNumber = req.body.securityNumber_input;
+
+    //Empty inputs check
+    if (!cardNumber || !expirationDate || !securityNumber) {
+        return res.json({
+            success: false,
+            message: "Please fill out the login fields."
+        });
+    }
+
+    try {
+        //Find user in database
+        const result = await pool.query(
+            "SELECT * FROM payment WHERE username = $1",
+            [req.session.user]
+        );
+
+        const user = result.rows[0];
+
+        //Checks if user already has payment details
+        if (result.rows.length === 0) {
+            const result = await pool.query(
+                "INSERT INTO payment (username, card)",
+                [req.session.user]
+            );
+        };
+
+        return res.json({
+            success: true,
+            email: user.email
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.json({
+            success: false,
+            message: "Server error. Please try again."
+        });
     }
 });
 
