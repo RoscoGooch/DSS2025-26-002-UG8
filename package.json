@@ -1,14 +1,20 @@
 {
+  "scripts": {
+    "test": "mocha app/test"
+  },
   "devDependencies": {
-    "express": "^4.21.1"
+    "chai": "^6.2.2",
+    "express": "^4.21.1",
+    "mocha": "^11.7.5",
+    "supertest": "^7.2.2"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "dompurify": "^3.4.1",
     "express-session": "^1.19.0",
-    "nodemailer": "^8.0.7",
     "helmet": "^8.1.0",
+    "nodemailer": "^8.0.7",
     "pg": "^8.20.0",
     "xss-clean": "^0.1.4"
   }

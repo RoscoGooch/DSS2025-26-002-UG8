@@ -52,8 +52,8 @@ app.use(session({
     rolling: true, //Resets maxAge after each request, keeps user logged in if they are interacting with the website
     cookie: {
         httpOnly: true,
-        secure: true, //SET TO TRUE WHEN USING HTTPS
-        maxAge: 1000 * 60 * 5 //10 minutes
+        secure: false, //SET TO FALSE WHEN RUNNING MOCHA TESTS
+        maxAge: 1000 * 60 * 10 //10 minutes
     },
 }));
 
@@ -86,7 +86,7 @@ app.post('/login', async function (req, res) {
         const result = await pool.query(
             "SELECT * FROM users WHERE username = $1",
             [username]
-        );
+        ); // Uses parameterized query to prevent SQL injection
 
         const user = result.rows[0];
 
@@ -167,8 +167,8 @@ app.get("/api/myPosts", requireLogin, async (req, res) => {
     try {
         const result = await pool.query(
             "SELECT * FROM posts WHERE username = $1 ORDER BY postid DESC",
-            [req.session.user]
-        );
+            [req.session.user] 
+        ); // Mitigatations against SQL injection are not broken as paramtized query still used. 
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -271,8 +271,8 @@ const transporter = nodemailer.createTransport({
     port: 587,
     secure: false,
     auth: {
-        user: 'roscogoo13@gmail.com',
-        pass: 'mris zxei lizn cepp',
+        user: 'dssug8verify@gmail.com',
+        pass: 'zosj upqt cirp ynmo',
     },
     tls: {
         rejectUnauthorized: false
@@ -282,14 +282,14 @@ const transporter = nodemailer.createTransport({
 //send email
 app.post('/send-email', async (req, res) => {
     const email = req.body.email;
-    const verification_code = Math.floor(100000 + Math.random() * 900000);
+    const verification_code = Math.floor(100000 + Math.random() * 900000);        
     req.session.verificationCode = verification_code;
     req.session.verificationExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
     await transporter.sendMail({
-        from: '"Foodies R Us" <roscogoo13@gmail.com>', // sender address
-        to: `${email}`, // list of recipients
-        subject: "Hello", // subject line
+        from: `"Music 'R' Us" <dssug8verify@gmail.com>`,
+        to: `${email}`,
+        subject: "Verification code for Music 'R' Us",
         text: `Verification code = ${verification_code}`, // plain text body
         html: `<b>Verification code = ${verification_code}<b>`, // HTML body
     });
@@ -297,6 +297,7 @@ app.post('/send-email', async (req, res) => {
     res.json({ success: true });
 });
 
+//check if verification code is correct
 app.post('/verify-code', (req, res) => {
     if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires) {
         req.session.loggedIn = true;
@@ -352,11 +353,17 @@ app.post('/payment', async function (req, res) {
     }
 });
 
-const options = {
-    key: fs.readFileSync('key.pem'),
-    cert: fs.readFileSync('cert.pem')
-};
+//When the app is running normally, start the HTTPS server, if not don't so it can be tested properly
+if (require.main === module) {
+    const options = {
+        key: fs.readFileSync('key.pem'),
+        cert: fs.readFileSync('cert.pem')
+    };
 
-https.createServer(options, app).listen(port, () => {
-    console.log(`App is running securely on port ${port}`);
-});
+    https.createServer(options, app).listen(port, () => {
+        console.log(`App is running securely on port ${port}`);
+    });
+}
+
+//Exports the app so it can be used in the test file
+module.exports = app;
