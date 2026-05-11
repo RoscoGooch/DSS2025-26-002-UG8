@@ -1,3 +1,8 @@
+//Always loads the .env file from the correct location, even in the moch test case in the tests folder
+require('dotenv').config({
+    path: require('path').resolve(__dirname, '.env')
+});
+
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -9,7 +14,6 @@ const app = express();
 const port = 3000;
 const crypto = require('crypto');
 const https = require('https');
-require('dotenv').config();
 
 var bodyParser = require('body-parser');
 const fs = require('fs');
@@ -282,7 +286,7 @@ const transporter = nodemailer.createTransport({
 //send email
 app.post('/send-email', async (req, res) => {
     const email = req.body.email;
-    const verification_code = Math.floor(100000 + Math.random() * 900000);        
+    const verification_code = Math.floor(100000 + Math.random() * 900000);
     req.session.verificationCode = verification_code;
     req.session.verificationExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
 
