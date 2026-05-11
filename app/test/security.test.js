@@ -5,8 +5,6 @@ const app = require("../app.js");
 const pool = require("../database.js");
 const bcrypt = require("bcrypt");
 
-//Stores the login cookies for the tests
-// const agent = request.agent(app);
 
 describe("Account Enumeration Protection", () => {
 
@@ -125,6 +123,9 @@ describe("Password Hashing", () => {
     it("should allow login with correct password", async () => {
         const password = "LoginPass123!";
         const hashed = await bcrypt.hash(password, 10);
+
+        //Ensures the account doesn't already exist
+        await pool.query("DELETE FROM users WHERE userid = $1", [8888]);
 
         await pool.query(
             "INSERT INTO users (userid, username, email, password) VALUES ($1, $2, $3, $4)",
