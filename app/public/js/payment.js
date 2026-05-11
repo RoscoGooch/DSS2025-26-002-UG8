@@ -25,7 +25,7 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
     const data = await response.json();
 
     if (data.success) {
-        
+        window.alert("Payment Added Successfully");
     } else {
         showError(data.message);
     }
