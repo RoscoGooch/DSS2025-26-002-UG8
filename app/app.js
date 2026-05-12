@@ -9,7 +9,6 @@ const cookieParser = require('cookie-parser');
 const bcrypt = require("bcrypt");
 const pool = require('./database');
 const helmet = require("helmet");
-// const xss = require("xss-clean");
 const app = express();
 const port = 3000;
 const crypto = require('crypto');
@@ -46,8 +45,6 @@ app.use(helmet.contentSecurityPolicy({
     },
 }));
 
-// app.use(xss());
-
 app.use(session({
     name: "sessionId",
     secret: "DONTTRYIT",
@@ -77,6 +74,16 @@ app.post('/login', async function (req, res) {
     const username = req.body.username_input;
     const password = req.body.password_input;
 
+    //Gets the starting time of the login attempt
+    const processStart = process.hrtime.bigint();
+
+    //Works out how long it takes for a process to run
+    function logTime(loginAttempt) {
+        const end = process.hrtime.bigint();
+        const ms = Number(end - processStart) / 1e6;
+        console.log(`${loginAttempt}: ${ms.toFixed(2)} ms`);
+    };
+
     //Empty inputs check
     if (!username || !password) {
         return res.json({
@@ -98,6 +105,7 @@ app.post('/login', async function (req, res) {
         if (result.rows.length === 0) {
             //Compares the input password with this fake hash, keeps the response time the same to avoid accounte enumeration
             const fakeMatch = await bcrypt.compare(password, "$2b$10$WE93n9GGTuQOueCbVyHq4OV3giSGE3kAc.0xP1OswsIBhPWdF.fbq");
+            logTime("Username Not Found");
             return res.json({
                 success: false,
                 message: "Incorrect username or password."
@@ -112,14 +120,15 @@ app.post('/login', async function (req, res) {
 
         //Wrong password
         if (!passwordMatch) {
+            logTime("Incorrect Password");
             return res.json({
                 success: false,
                 message: "Incorrect username or password."
             });
         };
 
-        req.session.user = username;
-        req.session.csrfToken = createCSRFToken();
+        //Creates a temporary session for users waiting for a correct verification code to be entered
+        req.session.mfaUser = username;
 
         return res.json({
             success: true,
@@ -171,7 +180,7 @@ app.get("/api/myPosts", requireLogin, async (req, res) => {
     try {
         const result = await pool.query(
             "SELECT * FROM posts WHERE username = $1 ORDER BY postid DESC",
-            [req.session.user] 
+            [req.session.user]
         ); // Mitigatations against SQL injection are not broken as paramtized query still used. 
         res.json(result.rows);
     } catch (err) {
@@ -203,7 +212,7 @@ app.post("/logout", (req, res) => {
             return res.status(500).send("Logout failed");
         }
 
-        res.clearCookie("connect.sid");
+        res.clearCookie("sessionId");
         res.redirect("../html/login.html");
     });
 });
@@ -303,7 +312,11 @@ app.post('/send-email', async (req, res) => {
 
 //check if verification code is correct
 app.post('/verify-code', (req, res) => {
-    if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires) {
+    if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires && req.session.mfaUser) {
+
+        //If the verification code is entered correctly, then the users actual session and csrfTokens are created
+        req.session.user = req.session.mfaUser;
+        req.session.csrfToken = createCSRFToken();
         req.session.loggedIn = true;
         res.json({ success: true });
     }
