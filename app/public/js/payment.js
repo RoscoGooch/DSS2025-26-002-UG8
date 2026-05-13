@@ -36,12 +36,12 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
 });
 
 function showError(msg) {
-    let old = document.getElementById("login_error");
+    let old = document.getElementById("payment_error");
     if (old) old.remove();
 
     let error = document.createElement("p");
-    error.id = "login_error";
+    error.id = "payment_error";
     error.classList.add("error");
     error.textContent = msg;
-    document.querySelector("#login_btn").before(error);
+    document.querySelector("#payment_btn").before(error);
 }

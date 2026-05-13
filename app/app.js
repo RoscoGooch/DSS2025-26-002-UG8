@@ -335,7 +335,7 @@ app.post('/payment', async function (req, res) {
     if (!cardNumber || !expirationDate || !securityNumber) {
         return res.json({
             success: false,
-            message: "Please fill out the login fields."
+            message: "Please fill out the payment fields."
         });
     }
 
@@ -350,9 +350,16 @@ app.post('/payment', async function (req, res) {
 
         //Checks if user already has payment details
         if (result.rows.length === 0) {
+            //If there are no existing details
             const result = await pool.query(
-                "INSERT INTO payment (username, card)",
-                [req.session.user]
+                "INSERT INTO payment (username, card_number, expiration_date, security_number) VALUES ($1, $2, $3, $4)",
+                [username, encryptedCardNumber, expirationDate, encryptedSecurityNumber]
+            );
+        } else {
+            //Else if there are existing details
+            const result = await pool.query(
+                "UPDATE payment SET card_number = $1, expiration_date = $2, security_number = $3 WHERE username = $4",
+                [encryptedCardNumber, expirationDate, encryptedSecurityNumber, username]
             );
         };
 
