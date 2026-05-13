@@ -9,6 +9,10 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
     const expirationDate = document.getElementById("expiration_date_input").value;
     const securityNumber = document.getElementById("security_number_input").value;
 
+    if (cardNumber.length != 16 || securityNumber.length != 3) {
+        showError("Card Number or Security Number Incorrect");
+    }
+
     const hashedCardNumber = await bcrypt.hash(cardNumber, 10);
     const hashedSecurityNumber = await bcrypt.hash(securityNumber, 10);
 

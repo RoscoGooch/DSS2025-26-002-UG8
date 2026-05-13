@@ -357,8 +357,7 @@ app.post('/payment', async function (req, res) {
         };
 
         return res.json({
-            success: true,
-            email: user.email
+            success: true
         });
 
     } catch (err) {
