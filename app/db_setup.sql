@@ -17,7 +17,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE payment (
-    userid INT PRIMARY KEY NOT NULL,
+    username VARCHAR(45) PRIMARY KEY NOT NULL,
     card_number VARCHAR(255),
     expiration_date DATE,
     security_number VARCHAR(255)
