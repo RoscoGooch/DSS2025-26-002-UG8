@@ -17,6 +17,9 @@ const https = require('https');
 var bodyParser = require('body-parser');
 const fs = require('fs');
 
+//Generates a random CSRF token using crypto, 
+// stored in the session and checked against the submitted token on form submissions
+// 32 bytes so its very hard to guess. Hex string so it can be easily stored and sent in forms.
 function createCSRFToken() {
     return crypto.randomBytes(32).toString('hex');
 }
@@ -216,7 +219,8 @@ app.post("/logout", (req, res) => {
         res.redirect("../html/login.html");
     });
 });
-
+// Core CSRF Protection - Middleware that compares submitted token with stored token.
+// Blocks request if tokens are missing or don't match. 
 function checkCSRF(req, res, next) {
     const submittedToken = req.body.csrfToken || req.body._csrf;
 
@@ -225,7 +229,8 @@ function checkCSRF(req, res, next) {
     }
     next();
 }
-
+// Token API endpoint. Frontend requests token from backend.
+// Only authroised users can access this endpoint, never hardcoded so can't be stolen. 
 app.get('/api/csrf-token', requireLogin, (req, res) => {
     res.json({ csrfToken: req.session.csrfToken });
 })
@@ -324,6 +329,9 @@ app.post('/verify-code', async (req, res) => {
 
         req.session.userId = userResult.rows[0].userid;
 
+        // Generates new CSRF token after login, stored server side
+        // so hackers cant guess it or create one before login.
+        // New token every login, prevents reuse. 
         req.session.csrfToken = createCSRFToken();
         req.session.loggedIn = true;
         res.json({ success: true });

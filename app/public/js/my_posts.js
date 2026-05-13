@@ -101,7 +101,8 @@ loadPosts();
 // Function to remove a post from the page after clicking delete - this is also reflected on the server side
 function deletePost(e) {
 
-    // Put post in object to be the body of fetch request
+    // Gets post user clicked on
+    // CSRF token attached to body, validates before decision
     const post = {
         postId: document.getElementsByTagName('h6')[0].textContent,
         csrfToken: csrfToken
@@ -112,6 +113,7 @@ function deletePost(e) {
     };
 
     // Delete post
+    // changes server side data so delete post is protected by CheckCSRf function in app.js.
     fetch('/deletepost', {
         method: 'POST',
         headers: requestHeaders,
