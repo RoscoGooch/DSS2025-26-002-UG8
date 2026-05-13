@@ -327,15 +327,9 @@ app.post('/verify-code', (req, res) => {
 
 app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
 
-    console.log("Payment body:", req.body);
-
     const cardNumber = req.body.card_number_input;
     const expirationDate = req.body.expiration_date_input;
     const securityNumber = req.body.security_number_input;
-
-    console.log(cardNumber);
-    console.log(expirationDate);
-    console.log(securityNumber);
 
     //Empty inputs check
     if (!cardNumber || !expirationDate || !securityNumber) {
@@ -350,24 +344,28 @@ app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
 
     try {
         //Find user in database
-        const result = await pool.query(
+        const userCheck = await pool.query(
             "SELECT * FROM payment WHERE username = $1",
             [req.session.user]
         );
 
+        console.log(userCheck);
+
         //Checks if user already has payment details
-        if (result.rows.length === 0) {
+        if (userCheck.rows.length === 0) {
             //If there are no existing details
             const result = await pool.query(
                 "INSERT INTO payment (username, card_number, expiration_date, security_number) VALUES ($1, $2, $3, $4)",
                 [req.session.user, hashedCardNumber, expirationDate, hashedSecurityNumber]
             );
+            console.log(result);
         } else {
             //Else if there are existing details
             const result = await pool.query(
                 "UPDATE payment SET card_number = $1, expiration_date = $2, security_number = $3 WHERE username = $4",
                 [hashedCardNumber, expirationDate, hashedSecurityNumber, req.session.user]
             );
+            console.log(result);
         };
 
         return res.json({
