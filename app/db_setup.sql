@@ -18,9 +18,9 @@ CREATE TABLE users (
 
 CREATE TABLE payment (
     userid INT PRIMARY KEY NOT NULL,
-    card_number BIGINT,
+    card_number VARCHAR(255),
     expiration_date DATE,
-    security_number INT
+    security_number VARCHAR(255)
 );
 
 CREATE TABLE posts (

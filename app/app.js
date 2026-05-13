@@ -345,8 +345,8 @@ app.post('/payment', async function (req, res) {
         });
     }
 
-    const hashedCardNumber = await bcrypt.hash(cardNumber, 10);
-    const hashedSecurityNumber = await bcrypt.hash(securityNumber, 10);
+    const hashedCardNumber = await bcrypt.hash(cardNumber);
+    const hashedSecurityNumber = await bcrypt.hash(securityNumber);
 
     try {
         //Find user in database
