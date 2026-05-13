@@ -1,5 +1,3 @@
-const bcrypt = require("bcrypt");
-
 document.getElementById("payment_form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -19,16 +17,14 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
         showError("Card Number or Security Number Incorrect");
     }
 
-    const hashedCardNumber = await bcrypt.hash(cardNumber, 10);
-    const hashedSecurityNumber = await bcrypt.hash(securityNumber, 10);
-
     const response = await fetch("/payment", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            cardNumber_input: hashedCardNumber,
-            expirationDate_input: sqlExpirationDate,
-            securityNumber_input: hashedSecurityNumber
+            card_number_input: cardNumber,
+            expiration_date_input: sqlExpirationDate,
+            security_number_input: securityNumber
         })
     });
 
