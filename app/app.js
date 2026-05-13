@@ -355,20 +355,18 @@ app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
             [req.session.user]
         );
 
-        const user = result.rows[0];
-
         //Checks if user already has payment details
         if (result.rows.length === 0) {
             //If there are no existing details
             const result = await pool.query(
                 "INSERT INTO payment (username, card_number, expiration_date, security_number) VALUES ($1, $2, $3, $4)",
-                [username, hashedCardNumber, expirationDate, hashedSecurityNumber]
+                [req.session.user, hashedCardNumber, expirationDate, hashedSecurityNumber]
             );
         } else {
             //Else if there are existing details
             const result = await pool.query(
                 "UPDATE payment SET card_number = $1, expiration_date = $2, security_number = $3 WHERE username = $4",
-                [hashedCardNumber, expirationDate, hashedSecurityNumber, username]
+                [hashedCardNumber, expirationDate, hashedSecurityNumber, req.session.user]
             );
         };
 
