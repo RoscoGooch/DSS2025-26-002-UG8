@@ -325,7 +325,7 @@ app.post('/verify-code', (req, res) => {
     }
 });
 
-app.post('/payment', async function (req, res) {
+app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
 
     console.log("Payment body:", req.body);
 
