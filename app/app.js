@@ -53,7 +53,7 @@ app.use(session({
     rolling: true, //Resets maxAge after each request, keeps user logged in if they are interacting with the website
     cookie: {
         httpOnly: true,
-        secure: false, //SET TO FALSE WHEN RUNNING MOCHA TESTS
+        secure: true, //SET TO FALSE WHEN RUNNING MOCHA TESTS
         maxAge: 1000 * 60 * 10 //10 minutes
     },
 }));
