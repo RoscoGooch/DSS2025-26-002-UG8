@@ -39,6 +39,7 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
 
     if (cardNumber.length != 16 || securityNumber.length != 3) {
         showError("Card Number or Security Number Incorrect");
+        return;
     }
 
     const response = await fetch("/payment", {
