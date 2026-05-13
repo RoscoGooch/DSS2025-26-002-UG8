@@ -1,6 +1,4 @@
 const bcrypt = require("bcrypt");
-const pool = require("./database");
-require('dotenv').config();
 
 document.getElementById("payment_form").addEventListener("submit", async (e) => {
     e.preventDefault();
