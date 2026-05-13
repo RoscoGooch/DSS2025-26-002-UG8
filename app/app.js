@@ -329,9 +329,9 @@ app.post('/payment', async function (req, res) {
 
     console.log("Payment body:", req.body);
 
-    const cardNumber = req.body.cardNumber_input;
-    const expirationDate = req.body.expirationDate_input;
-    const securityNumber = req.body.securityNumber_input;
+    const cardNumber = req.body.card_number_input;
+    const expirationDate = req.body.expiration_date_input;
+    const securityNumber = req.body.security_number_input;
 
     console.log(cardNumber);
     console.log(expirationDate);
