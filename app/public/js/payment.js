@@ -1,9 +1,31 @@
+// Fetches a fresh CSRF token when the payment page loads and stores it in the hidden form field.
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const response = await fetch("/api/csrf-token", {
+            method: "GET",
+            credentials: "include"
+        });
+
+        const data = await response.json();
+        document.getElementById("csrf_token_input").value = data.csrfToken;
+        console.log("Payment CSRF token loaded:", data.csrfToken);
+    } catch (error) {
+        console.error("Could not load CSRF token:", error);
+    }
+});
+
 document.getElementById("payment_form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const cardNumber = document.getElementById("card_number_input").value;
     const expirationDate = document.getElementById("expiration_date_input").value;
     const securityNumber = document.getElementById("security_number_input").value;
+    const csrfToken = document.getElementById("csrf_token_input").value;
+
+    if (!csrfToken) {
+        showError("CSRF token has not loaded yet. Please refresh the page and try again.");
+        return;
+    }
 
     console.log(cardNumber);
     console.log(expirationDate);
@@ -22,18 +44,27 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            card_number_input: cardNumber,
-            expiration_date_input: sqlExpirationDate,
-            security_number_input: securityNumber
+            cardNumber_input: cardNumber,
+            expirationDate_input: sqlExpirationDate,
+            securityNumber_input: securityNumber,
+            _csrf: csrfToken
         })
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data;
+
+    try {
+        data = JSON.parse(responseText);
+    } catch (error) {
+        showError(responseText || "Request failed. This may be due to an invalid or missing CSRF token.");
+        return;
+    }
 
     if (data.success) {
         window.alert("Payment Added Successfully");
     } else {
-        showError(data.message);
+        showError(data.message || "Payment request failed.");
     }
 });
 

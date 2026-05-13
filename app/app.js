@@ -218,7 +218,7 @@ app.post("/logout", (req, res) => {
 });
 
 function checkCSRF(req, res, next) {
-    const submittedToken = req.body.csrfToken;
+    const submittedToken = req.body.csrfToken || req.body._csrf;
 
     if (!submittedToken || submittedToken !== req.session.csrfToken) {
         return res.status(403).send("Invalid CSRF token.");
@@ -311,11 +311,19 @@ app.post('/send-email', async (req, res) => {
 });
 
 //check if verification code is correct
-app.post('/verify-code', (req, res) => {
+app.post('/verify-code', async (req, res) => {
     if (req.session.verificationCode && req.body.code === req.session.verificationCode && Date.now() < req.session.verificationExpires && req.session.mfaUser) {
 
         //If the verification code is entered correctly, then the users actual session and csrfTokens are created
         req.session.user = req.session.mfaUser;
+
+        const userResult = await pool.query(
+            "SELECT userid FROM users WHERE username = $1",
+            [req.session.mfaUser]
+        );
+
+        req.session.userId = userResult.rows[0].userid;
+
         req.session.csrfToken = createCSRFToken();
         req.session.loggedIn = true;
         res.json({ success: true });
@@ -327,9 +335,10 @@ app.post('/verify-code', (req, res) => {
 
 app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
 
-    const cardNumber = req.body.card_number_input;
-    const expirationDate = req.body.expiration_date_input;
-    const securityNumber = req.body.security_number_input;
+    const cardNumber = req.body.cardNumber_input;
+    const expirationDate = req.body.expirationDate_input;
+    const securityNumber = req.body.securityNumber_input;
+    console.log("Payment body:", req.body);
 
     //Empty inputs check
     if (!cardNumber || !expirationDate || !securityNumber) {
@@ -346,7 +355,7 @@ app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
         //Find user in database
         const userCheck = await pool.query(
             "SELECT * FROM payment WHERE username = $1",
-            [req.session.user]
+            [req.session.userId]
         );
 
         console.log(userCheck);
@@ -356,14 +365,14 @@ app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
             //If there are no existing details
             const result = await pool.query(
                 "INSERT INTO payment (username, card_number, expiration_date, security_number) VALUES ($1, $2, $3, $4)",
-                [req.session.user, hashedCardNumber, expirationDate, hashedSecurityNumber]
+                [req.session.userId, hashedCardNumber, expirationDate, hashedSecurityNumber]
             );
             console.log(result);
         } else {
             //Else if there are existing details
             const result = await pool.query(
                 "UPDATE payment SET card_number = $1, expiration_date = $2, security_number = $3 WHERE username = $4",
-                [hashedCardNumber, expirationDate, hashedSecurityNumber, req.session.user]
+                [hashedCardNumber, expirationDate, hashedSecurityNumber, req.session.userId]
             );
             console.log(result);
         };

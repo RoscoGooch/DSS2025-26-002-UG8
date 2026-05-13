@@ -19,14 +19,15 @@
         <p>Enter your payment details here.</p>
 
         <form method="post" action="/payment" id="payment_form">
+            <input type="hidden" name="_csrf" id="csrf_token_input">
             <label for="card_number_input">Card Number:</label>
-            <input type="text" id="card_number_input" name="card_number_input">
+            <input type="text" id="card_number_input" name="cardNumber_input">
 
             <label for="expiration_date_input">Expiration Date:</label>
-            <input type="text" inputmode="numeric" placeholder="MM/YY" pattern="^(0[1-9]|1[0-2])\/\d{2}$" maxlength="5" id="expiration_date_input" name="expiration_date_input">
+            <input type="text" inputmode="numeric" placeholder="MM/YY" pattern="^(0[1-9]|1[0-2])\/\d{2}$" maxlength="5" id="expiration_date_input" name="expirationDate_input">
 
             <label for="security_number_input">Security Number:</label>
-            <input type="password" id="security_number_input" name="security_number_input">
+            <input type="password" id="security_number_input" name="securityNumber_input">
 
             <button id="payment_btn" type="submit">Submit Payment Details</button>
         </form>
