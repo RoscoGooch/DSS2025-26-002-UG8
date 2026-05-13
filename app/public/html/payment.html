@@ -23,7 +23,7 @@
             <input type="text" id="card_number_input" name="card_number_input">
 
             <label for="expiration_date_input">Expiration Date:</label>
-            <input type="date" id="expiration_date_input" name="expiration_date_input">
+            <input type="text" inputmode="numeric" placeholder="MM/YY" pattern="^(0[1-9]|1[0-2])\/\d{2}$" maxlength="5" id="expiration_date_input" name="expiration_date_input">
 
             <label for="security_number_input">Security Number:</label>
             <input type="password" id="security_number_input" name="security_number_input">

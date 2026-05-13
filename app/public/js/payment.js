@@ -9,6 +9,10 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
     const expirationDate = document.getElementById("expiration_date_input").value;
     const securityNumber = document.getElementById("security_number_input").value;
 
+    const [month, year] = expirationDate.split('/');
+
+    const sqlExpirationDate = `20${year}-${month}-01`;
+
     if (cardNumber.length != 16 || securityNumber.length != 3) {
         showError("Card Number or Security Number Incorrect");
     }
@@ -21,7 +25,7 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             cardNumber_input: hashedCardNumber,
-            expirationDate_input: expirationDate,
+            expirationDate_input: sqlExpirationDate,
             securityNumber_input: hashedSecurityNumber
         })
     });
