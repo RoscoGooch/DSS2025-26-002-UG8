@@ -327,6 +327,8 @@ app.post('/verify-code', (req, res) => {
 
 app.post('/payment', async function (req, res) {
 
+    console.log("Payment body:", req.body);
+
     const cardNumber = req.body.cardNumber_input;
     const expirationDate = req.body.expirationDate_input;
     const securityNumber = req.body.securityNumber_input;
