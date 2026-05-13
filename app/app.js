@@ -345,8 +345,8 @@ app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
         });
     }
 
-    const hashedCardNumber = await bcrypt.hash(cardNumber);
-    const hashedSecurityNumber = await bcrypt.hash(securityNumber);
+    const hashedCardNumber = await bcrypt.hash(cardNumber, 10);
+    const hashedSecurityNumber = await bcrypt.hash(securityNumber, 10);
 
     try {
         //Find user in database
