@@ -331,6 +331,10 @@ app.post('/payment', async function (req, res) {
     const expirationDate = req.body.expirationDate_input;
     const securityNumber = req.body.securityNumber_input;
 
+    console.log(cardNumber);
+    console.log(expirationDate);
+    console.log(securityNumber);
+
     //Empty inputs check
     if (!cardNumber || !expirationDate || !securityNumber) {
         return res.json({

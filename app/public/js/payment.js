@@ -9,6 +9,10 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
     const expirationDate = document.getElementById("expiration_date_input").value;
     const securityNumber = document.getElementById("security_number_input").value;
 
+    console.log(cardNumber);
+    console.log(expirationDate);
+    console.log(securityNumber);
+
     const [month, year] = expirationDate.split('/');
 
     const sqlExpirationDate = `20${year}-${month}-01`;
