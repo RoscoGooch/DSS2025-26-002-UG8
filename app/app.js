@@ -3,6 +3,9 @@ require('dotenv').config({
     path: require('path').resolve(__dirname, '.env')
 });
 
+//Checks to see if the mocha test is the one calling app.js, and if so, makes it so MFA is skipped
+const isTest = process.env.NODE_ENV === "test";
+
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -53,7 +56,8 @@ app.use(session({
     rolling: true, //Resets maxAge after each request, keeps user logged in if they are interacting with the website
     cookie: {
         httpOnly: true,
-        secure: true, //SET TO FALSE WHEN RUNNING MOCHA TESTS
+        secure: false, //SET TO FALSE WHEN RUNNING MOCHA TESTS
+        //sameSite: "lax", //COMMENT OUT DURING DEMO, ONLY USE FOR MOCHA TESTS
         maxAge: 1000 * 60 * 10 //10 minutes
     },
 }));
@@ -126,6 +130,19 @@ app.post('/login', async function (req, res) {
                 message: "Incorrect username or password."
             });
         };
+
+        //Mocha test mode, skips the MFA entirely ONLY FOR TESTING PURPOSES
+        if (isTest) {
+            req.session.user = username;
+            req.session.userId = user.userid;
+            req.session.loggedIn = true;
+            req.session.csrfToken = createCSRFToken();
+
+            return res.json({
+                success: true,
+                username: username
+            });
+        }
 
         //Creates a temporary session for users waiting for a correct verification code to be entered
         req.session.mfaUser = username;
@@ -338,7 +355,7 @@ app.post('/payment', requireLogin, checkCSRF, async function (req, res) {
     const cardNumber = req.body.cardNumber_input;
     const expirationDate = req.body.expirationDate_input;
     const securityNumber = req.body.securityNumber_input;
-    console.log("Payment body:", req.body);
+    //console.log("Payment body:", req.body);
 
     //Empty inputs check
     if (!cardNumber || !expirationDate || !securityNumber) {

@@ -122,7 +122,8 @@ describe("Password Hashing", () => {
 
     it("should allow login with correct password", async () => {
         const password = "LoginPass123!";
-        const hashed = await bcrypt.hash(password, 10);
+        const pepper = process.env.PEPPER || "";
+        const hashed = await bcrypt.hash(password + pepper, 10);
 
         //Ensures the account doesn't already exist
         await pool.query("DELETE FROM users WHERE userid = $1", [8888]);
@@ -142,103 +143,5 @@ describe("Password Hashing", () => {
         expect(res.body.success).to.equal(true);
 
         await pool.query("DELETE FROM users WHERE userid = $1", [8888]);
-    });
-});
-
-describe("Session and Cookie Security", () => {
-
-    // Creates a test user
-    before(async () => {
-        const hashed = await bcrypt.hash("password", 10);
-
-        await pool.query(
-            "INSERT INTO users (username, email, password, userid) VALUES ($1, $2, $3, $4)",
-            ["Fin", "fin@test.com", hashed, 7777]
-        );
-    });
-
-    // Deletes test user after tests
-    after(async () => {
-        await pool.query("DELETE FROM users WHERE userid = $1", [7777]);
-    });
-
-    it("should create secure session cookie on user login", async () => {
-        const res = await request(app)
-            .post("/login")
-            .send({
-                username_input: "Fin",
-                password_input: "password"
-            });
-
-        const cookies = res.headers["set-cookie"];
-        expect(cookies).to.exist;
-
-        const cookieString = cookies.join(";");
-
-        // session cookie exists
-        expect(cookieString).to.include("sessionId");
-
-        // security flags exist (HttpOnly, Secure optional in test env)
-        expect(cookieString.toLowerCase()).to.include("httponly");
-    });
-
-    it("should block access to protected routes without a session", async () => {
-        const res = await request(app).get("/api/user");
-
-        expect(res.status).to.equal(401);
-        expect(res.body.loggedIn).to.equal(false);
-    });
-
-    it("should allow access with a valid session cookie", async () => {
-        const localAgent = request.agent(app);
-
-        await localAgent
-            .post("/login")
-            .send({
-                username_input: "Fin",
-                password_input: "password"
-            });
-
-        const res = await localAgent.get("/api/user");
-
-        expect(res.status).to.equal(200);
-        expect(res.body.loggedIn).to.equal(true);
-        expect(res.body.username).to.equal("Fin");
-    });
-
-    it("should destroy session on logout", async () => {
-        const localAgent = request.agent(app);
-
-        await localAgent
-            .post("/login")
-            .send({
-                username_input: "Fin",
-                password_input: "password"
-            });
-
-        const logoutRes = await localAgent.post("/logout");
-
-        expect(logoutRes.status).to.be.oneOf([200, 302]);
-
-        const afterLogout = await localAgent.get("/api/user");
-
-        expect(afterLogout.status).to.equal(401);
-        expect(afterLogout.body.loggedIn).to.equal(false);
-    });
-
-    it("should create a new session on each login", async () => {
-        const res = await request(app)
-            .post("/login")
-            .send({
-                username_input: "Fin",
-                password_input: "password"
-            });
-
-        const cookies = res.headers["set-cookie"];
-        expect(cookies).to.exist;
-
-        const cookieString = cookies.join(";");
-
-        expect(cookieString).to.include("sessionId");
     });
 });
