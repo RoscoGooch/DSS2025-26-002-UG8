@@ -19,6 +19,7 @@
         <p>Enter your payment details here.</p>
 
         <form method="post" action="/payment" id="payment_form">
+            // Hidden input to store CSRF token, populated by payment.js when page loads.
             <input type="hidden" name="_csrf" id="csrf_token_input">
             <label for="card_number_input">Card Number:</label>
             <input type="text" id="card_number_input" name="cardNumber_input">

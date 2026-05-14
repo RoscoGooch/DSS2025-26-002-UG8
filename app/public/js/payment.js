@@ -1,4 +1,6 @@
 // Fetches a fresh CSRF token when the payment page loads and stores it in the hidden form field.
+// Handles form submission by sending payment details and the CSRF token to the server via AJAX.
+//AJAX allows handling responeses without full page reload. 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         const response = await fetch("/api/csrf-token", {
@@ -48,6 +50,7 @@ document.getElementById("payment_form").addEventListener("submit", async (e) => 
             cardNumber_input: cardNumber,
             expirationDate_input: sqlExpirationDate,
             securityNumber_input: securityNumber,
+            // Token attached to payment request, validated before processing.
             _csrf: csrfToken
         })
     });
